@@ -1,36 +1,36 @@
 import React, { Component } from 'react';
 
 import { connect } from 'react-redux';
-import { setLineWidth } from '../actions/index';
+import {
+	setLineWidth,
+	LineCaps
+} from '../actions/index';
 
 import './Linewidth.css';
 
 class LineWidth extends Component {
-	componentWillMount() {
-		this.setCurrent(this.props.settings.lineWidth);
+	constructor(props) {
+		super(props);
+		
 		this.onChange = this.onChange.bind(this);
 	}
 	
-	setCurrent(lineWidth) {
-		this.setState((prevState, props) => {
-			let { dispatch } = props;
-			dispatch(setLineWidth(lineWidth));
-			return { lineWidth: lineWidth*1 }
-		});
-	}
-	
 	onChange(event) {
-		this.setCurrent(event.target.value);
+		let { dispatch } = this.props;
+		dispatch(setLineWidth(event.target.value));
 	}
 	
 	render() {
+		const height = (this.props.lineCap === LineCaps.BUTT) ? 1 : this.props.lineWidth;
+		const radius = (this.props.lineCap === LineCaps.ROUND) ? this.props.lineWidth/2 : 0;
+		
 		return (
 			<div className="Linewidth">
-				<input type="range" min="1" max="30" defaultValue={this.state.lineWidth} onChange={this.onChange} />
+				<input type="range" min="1" max="30" defaultValue={this.props.lineWidth} onChange={this.onChange} />
 				<div className="Linewidth-size" style={{
-					width: this.state.lineWidth,
-					height: this.state.lineWidth,
-					borderRadius: this.state.lineWidth/2
+					width: this.props.lineWidth,
+					height: height,
+					borderRadius: radius
 				}}></div>
 			</div>
 		);
@@ -38,5 +38,8 @@ class LineWidth extends Component {
 }
 
 export default connect(
-  state => ({ settings: state.settings })
+	state => ({
+		lineWidth: state.settings.lineWidth,
+		lineCap: state.settings.lineCap
+	})
 )(LineWidth);

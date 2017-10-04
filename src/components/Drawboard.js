@@ -31,7 +31,7 @@ class Drawboard extends Component {
 	}
 	
 	updateOffset() {
-		const clientRect = this.refs.drawboard.getBoundingClientRect();
+		const clientRect = this.canvas.getBoundingClientRect();
 		this.setState({
 			offsetLeft: clientRect.left,
 			offsetTop: clientRect.top
@@ -55,6 +55,12 @@ class Drawboard extends Component {
 			)
 		));
 		
+		const ctx = event.target.getContext('2d');
+		ctx.strokeStyle = this.props.state.settings.strokeStyle;
+		ctx.lineCap = this.props.state.settings.lineCap;
+		ctx.lineWidth = this.props.state.settings.lineWidth;
+		ctx.globalCompositeOperation = this.props.state.settings.globalCompositeOperation;
+
 		this.setState((prevState) => {
 			return {
 				isDrawing: true,
@@ -75,10 +81,6 @@ class Drawboard extends Component {
 			const toX = event.clientX - this.state.offsetLeft;
 			const toY = event.clientY - this.state.offsetTop;
 			const ctx = event.target.getContext('2d');
-			ctx.strokeStyle = this.props.state.settings.strokeStyle;
-			ctx.lineCap = this.props.state.settings.lineCap;
-			ctx.lineWidth = this.props.state.settings.lineWidth;
-			ctx.globalCompositeOperation = this.props.state.settings.globalCompositeOperation;
 			ctx.beginPath();
 			ctx.moveTo( toX, toY );
 			ctx.lineTo( toX, toY + 0.1 );
@@ -88,7 +90,7 @@ class Drawboard extends Component {
 	
 	shouldComponentUpdate(nextProps, nextState) {
 		if (this.props.state.history.count > nextProps.state.history.count) {
-			this.refs.drawboard.getContext( "2d" ).putImageData( this.props.state.history.data[this.props.state.history.count-1], 0, 0 );
+			this.canvas.getContext( "2d" ).putImageData( this.props.state.history.data[this.props.state.history.count-1], 0, 0 );
 		}
 		return false;
 	}
@@ -96,7 +98,7 @@ class Drawboard extends Component {
 	render() {
 		return (
 			<canvas
-				ref="drawboard"
+				ref={canvas => this.canvas = canvas}
 				className="App-drawboard"
 				width="800px"
 				height="400px"

@@ -7,32 +7,24 @@ import {
 } from '../actions/index';
 
 class GlobalCompositeOperation extends Component {
-	componentWillMount() {
+	constructor(props) {
+		super(props);
+		
 		this.onChange = this.onChange.bind(this);
-		this.setCurrent(this.props.settings.globalCompositeOperation);
-	}
-	
-	setCurrent(operation) {
-		this.setState((prevState, props) => {
-			if (prevState) {
-				let { dispatch } = props;
-				dispatch(setGlobalCompositeOperation(operation));
-			}
-			return { operation: operation };
-		});
 	}
 	
 	onChange(event) {
-		this.setCurrent(event.target.value);
+		let { dispatch } = this.props;
+		dispatch(setGlobalCompositeOperation(event.target.value));
 	}
 	
 	render() {
 		const options = Object.keys(GlobalCompositeOperations).map((key, index) => {
-			return <option key={index}>{GlobalCompositeOperations[key]}</option>
+			return <option key={index}>{GlobalCompositeOperations[key]}</option>;
 		});
 		
 		return (
-			<select onChange={this.onChange} defaultValue={this.state.operation}>
+			<select onChange={this.onChange} defaultValue={this.props.gcOperation}>
 				{options}
 			</select>
 		);
@@ -40,5 +32,5 @@ class GlobalCompositeOperation extends Component {
 }
 
 export default connect(
-	state => ({ settings: state.settings })
+	state => ({ gcOperation: state.settings.globalCompositeOperation })
 )(GlobalCompositeOperation);

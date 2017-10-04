@@ -1,4 +1,5 @@
-import React, { Component } from 'react';
+import React, { PureComponent } from 'react';
+import PropTypes from 'prop-types';
 
 import { connect } from 'react-redux';
 
@@ -15,20 +16,16 @@ const components = {
 	globalCompositeOperation: GlobalCompositeOperation
 };
 
-class SettingsApp extends Component {
+class SettingsApp extends PureComponent {
 	componentWillMount() {
 		this.onSave = this.onSave.bind(this);
 	}
-	
+
 	onSave() {	
 		this.props.close();
 	}
 	
 	render() {
-		if ( !this.props.name ) {
-			return null;
-		}
-		
 		const SettingComponent = components[this.props.name];
 		
 		return (
@@ -44,6 +41,11 @@ class SettingsApp extends Component {
 		);
 	}
 }
+
+SettingsApp.propTypes = {
+  name: PropTypes.string.isRequired,
+  close: PropTypes.func.isRequired
+};
 
 export default connect(
   state => ({ settings: state.settings })

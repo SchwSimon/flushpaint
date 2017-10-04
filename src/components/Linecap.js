@@ -1,43 +1,47 @@
 import React, { Component } from 'react';
 
 import { connect } from 'react-redux';
-import { setLineCap } from '../actions/index';
+import {
+	setLineCap,
+	LineCaps
+} from '../actions/index';
 
 import './Linecap.css';
 
-class LineCap extends Component {	
-	componentDidMount() {
-		this.setCurrent(this.props.settings.lineCap);
+class LineCap extends Component {
+	constructor(props) {
+		super(props);
+		
 		this.onClick = this.onClick.bind(this);
 	}
 	
-	setCurrent(lineCap) {
-		this.setState((prevState, props) => {
-			if (prevState) {
-				this.refs[prevState.value].disabled = false;
-				let { dispatch } = props;
-				dispatch(setLineCap(lineCap));
-			}
-			this.refs[lineCap].disabled = true;
-			return { value: lineCap };
-		});
-	}
-	
 	onClick(event) {
-		this.setCurrent(event.target.value);
+		let { dispatch } = this.props;
+		dispatch(setLineCap(event.target.value));
 	}
 	
 	render() {
+		const buttons = Object.keys(LineCaps).map((key, index) => {
+			return (
+				<button
+					key={index}
+					onClick={this.onClick}
+					value={LineCaps[key]}
+					ref={button => this[LineCaps[key]] = button}
+					disabled={(this.props.lineCap === LineCaps[key]) ? 'true' : ''}
+				>{LineCaps[key].charAt(0).toUpperCase() + LineCaps[key].substr(1)}
+				</button>
+			);
+		});
+	
 		return (
 			<div className="LineCap">
-				<button onClick={this.onClick} value="round" ref="round">Round</button>
-				<button onClick={this.onClick} value="square" ref="square">Square</button>
-				<button onClick={this.onClick} value="butt" ref="butt">Butt</button>
+				{buttons}
 			</div>
 		);
 	}
 }
 
 export default connect(
-  state => ({ settings: state.settings })
+  state => ({ lineCap: state.settings.lineCap })
 )(LineCap);

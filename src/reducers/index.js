@@ -29,7 +29,7 @@ function settings(state = initialState.settings, action) {
 			});
 		case SET_LINEWIDTH:
 			return Object.assign({}, state, {
-				lineWidth: action.width
+				lineWidth: action.width*1
 			});
 		case SET_LINECAP:
 			return Object.assign({}, state, {

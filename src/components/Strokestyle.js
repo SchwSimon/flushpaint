@@ -6,27 +6,22 @@ import { setStrokeStyle } from '../actions/index';
 import { SketchPicker } from 'react-color';
 
 class StrokeStyle extends Component {
-	componentWillMount() {
-		this.setCurrent = this.setCurrent.bind(this);
-		this.setCurrent(this.props.settings.strokeStyle);
+	constructor(props) {
+		super(props);
+		
+		this.onPick = this.onPick.bind(this);
 	}
 	
-	setCurrent(color) {
-		this.setState((prevState, props) => {
-			if (prevState) {
-				let { dispatch } = props;
-				dispatch(setStrokeStyle('rgba(' + color.rgb.r + ',' + color.rgb.g + ',' + color.rgb.b + ',' + color.rgb.a + ')'));
-				color = color.rgb;
-			}
-			return { color: color };
-		});
+	onPick(color) {
+		let { dispatch } = this.props;
+		dispatch(setStrokeStyle('rgba(' + color.rgb.r + ',' + color.rgb.g + ',' + color.rgb.b + ',' + color.rgb.a + ')'));
 	}
 	
 	render() {
-		return <SketchPicker color={this.state.color} onChangeComplete={this.setCurrent} />
+		return <SketchPicker color={this.props.color} onChangeComplete={this.onPick} />
 	}
 }
 
 export default connect(
-  state => ({ settings: state.settings })
+  state => ({ color: state.settings.strokeStyle })
 )(StrokeStyle);

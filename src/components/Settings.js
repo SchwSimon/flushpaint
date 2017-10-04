@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { PureComponent } from 'react';
 
 import { connect } from 'react-redux';
 import { undoHistory } from '../actions/index';
@@ -9,7 +9,7 @@ const dispatchFunctions = {
 	undo: undoHistory
 }
 
-class Settings extends Component {
+class Settings extends PureComponent {
 	constructor(props) {
 		super(props);
 		
@@ -58,13 +58,14 @@ class Settings extends Component {
 					<button onClick={this.openApp} app="globalCompositeOperation">Composite Operation</button>
 					<button onClick={this.triggerFunction} name="undo">Undo</button>
 				</div>
-				<SettingsApp
+				{this.state.app && <SettingsApp
 					name={this.state.app}
 					close={this.closeApp}
-				/>
+				/>}
 			</div>
 		);
 	}
 }
+
 
 export default connect()(Settings);

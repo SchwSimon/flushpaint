@@ -1,11 +1,12 @@
 import React, { Component } from 'react';
 
+import { connect } from 'react-redux';
+import { undoHistory } from '../actions/index';
+
 import SettingsApp from './SettingsApp';
 
-import Undo from  './Undo';
-
-const triggerComponents = {
-	undo: Undo
+const dispatchFunctions = {
+	undo: undoHistory
 }
 
 class Settings extends Component {
@@ -14,13 +15,27 @@ class Settings extends Component {
 		
 		this.state = {
 			app: '',
+			trigger: ''
 		}
 		
 		this.openApp = this.openApp.bind(this);
 		this.closeApp = this.closeApp.bind(this);
-		this.triggerComponent = this.triggerComponent.bind(this);
+		this.triggerFunction = this.triggerFunction.bind(this);
 	}
-
+	
+	triggerFunction(event) {
+		let { dispatch } = this.props;
+		dispatch( dispatchFunctions[event.target.getAttribute('name')]() );
+	}
+	
+	triggerApp(event) {
+		this.setState({
+			trigger: event.target.getAttribute('app')
+		}, () => {
+			this.setState({trigger:''});
+		});
+	}
+	
 	openApp(event) {
 		this.setState({
 			app: event.target.getAttribute('app')
@@ -33,10 +48,6 @@ class Settings extends Component {
 		});
 	}
 	
-	triggerComponent(event) {
-		console.log( triggerComponents[event.target.getAttribute('name')] );
-	}
-	
 	render() {
 		return (
 			<div className="App-settings">
@@ -45,7 +56,7 @@ class Settings extends Component {
 					<button onClick={this.openApp} app="lineWidth">Size</button>
 					<button onClick={this.openApp} app="lineCap">Type</button>
 					<button onClick={this.openApp} app="globalCompositeOperation">Composite Operation</button>
-					<button onClick={this.triggerComponent} name="undo">Undo</button>
+					<button onClick={this.triggerFunction} name="undo">Undo</button>
 				</div>
 				<SettingsApp
 					name={this.state.app}
@@ -56,4 +67,4 @@ class Settings extends Component {
 	}
 }
 
-export default Settings;
+export default connect()(Settings);

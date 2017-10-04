@@ -10,7 +10,8 @@ class Drawboard extends Component {
 		super(props);
 		
 		this.state = {
-			isDrawing: false
+			isDrawing: false,
+			historyCount: 0
 		}
 		
 		this.enableDrawing = this.enableDrawing.bind(this);
@@ -36,6 +37,9 @@ class Drawboard extends Component {
 			offsetTop: clientRect.top
 		});
 	}
+	onResize() {
+		this.updateOffset();
+	}
 	
 	enableDrawing(event) {
 		event.preventDefault();
@@ -51,8 +55,11 @@ class Drawboard extends Component {
 			)
 		));
 		
-		this.setState({
-			isDrawing: true
+		this.setState((prevState) => {
+			return {
+				isDrawing: true,
+				historyCount: prevState.historyCount + 1
+			};
 		}, () => this.draw(event) );
 	}
 	
@@ -79,8 +86,11 @@ class Drawboard extends Component {
 		}
 	}
 	
-	onResize() {
-		this.updateOffset();
+	shouldComponentUpdate(nextProps, nextState) {
+		if (this.props.state.history.count > nextProps.state.history.count) {
+			this.refs.drawboard.getContext( "2d" ).putImageData( this.props.state.history.data[this.props.state.history.count-1], 0, 0 );
+		}
+		return false;
 	}
 	
 	render() {

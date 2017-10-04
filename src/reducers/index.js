@@ -15,7 +15,10 @@ const initialState = {
 		lineCap: 'round',
 		globalCompositeOperation: 'source-over'
 	},
-	history: []
+	history: {
+		count: 0,
+		data: []
+	}
 };
 
 function settings(state = initialState.settings, action) {
@@ -43,12 +46,27 @@ function settings(state = initialState.settings, action) {
 
 function history(state = initialState.history, action) {
 	switch(action.type) {
-		case PUSH_HISTORY:
-			return state.concat( action.data );
+		case PUSH_HISTORY: {
+			let nextData = state.data.concat(action.data);
+			let nextCount = state.count;
+			if (state.count >= 50) {
+				nextData.shift();
+			} else {
+				nextCount++;
+			}
+			return Object.assign({}, state, {
+				data: nextData,
+				count: nextCount
+			});
+		}
 		case UNDO_HISTORY: {
-			const stateCache = Object.assign([], state);
-			stateCache.pop();
-			return stateCache;
+			if ( !state.count ) return state;
+			const dataCache = Object.assign([], state.data);
+			dataCache.pop();
+			return Object.assign({}, state, {
+				data: dataCache,
+				count: state.count - 1
+			});
 		}
 		default:
 			return state;

@@ -1,0 +1,27 @@
+.LineWidth {
+	padding: 6px 0;
+	border: 1px solid rgb(204, 204, 204);
+	border-top-left-radius: 5px;
+	border-top-right-radius: 5px;
+}
+	.LineWidth-input {
+		display: block;
+		margin: 0 auto;
+		background-color: white;
+	}
+	.LineWidth-strokeDisplay {
+		height: 44px;
+	}
+		.LineWidth-stroke,
+		.LineWidth-strokeCenter,
+		.LineWidth-strokeInfo {
+			display: inline-block;
+			vertical-align: middle;
+		}
+		.LineWidth-strokeCenter {
+			height: 100%;
+		}
+		.LineWidth-strokeInfo {
+			margin-left: 20px;
+		}
+

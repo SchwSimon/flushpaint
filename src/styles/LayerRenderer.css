@@ -1,0 +1,24 @@
+.LayerRenderer {
+	background-color: #f0f0f0;
+	background-image: url('DrawboardBackground.gif');
+	cursor: pointer;
+	padding: 2px 0 2px;
+	border-left: 1px solid lightgray;
+	border-right: 1px solid lightgray;
+	height: 63px;
+	text-align: center;
+}
+	.LayerRenderer-canvas {
+		display: inline-block;
+		vertical-align: middle;
+		width: 100px;
+		height: 50px;
+	}
+	.LayerRenderer-centerer {
+		display: inline-block;
+		vertical-align: middle;
+		height: 100%;
+		width: 1px;
+		margin-left: -1px;
+		opacity: 0;
+	}

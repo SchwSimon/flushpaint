@@ -1,81 +1,48 @@
 import { combineReducers } from 'redux';
 import {
-	SET_STROKESTYLE,
-	SET_LINEWIDTH,
-	SET_LINECAP,
-	SET_GLOBALCOMPOSITEOPERATION,
-	PUSH_HISTORY,
-	UNDO_HISTORY
+	LineCaps,
+	GlobalCompositeOperations,
+	ToolList,
 } from '../actions/index';
 
-const initialState = {
+import { live } from './live';
+import { settings } from './settings';
+import {
+	layers,
+	generateNewLayerProps,
+	DEFAULT_NEXTLAYERCONTENT,
+	CURRENT_LAYER_ID,
+	LAYER_ID_PREFIX
+} from './layers';
+
+export const initialState = {
+	live: {
+		isDrawing: false,
+		isMoving: false,
+		interactionTimeout: null,
+		layerID: null
+	},
 	settings: {
 		strokeStyle: 'rgba(0,0,0,1)',
-		lineWidth: 4,
-		lineCap: 'round',
-		globalCompositeOperation: 'source-over'
+		lineWidth: 10,
+		lineCap: LineCaps.ROUND,
+		globalCompositeOperation: GlobalCompositeOperations.SOURCE_OVER,
+		tool: ToolList.BRUSH
 	},
-	history: {
-		count: 0,
-		data: []
+	layers: {
+		selectedID: CURRENT_LAYER_ID,
+		idPrefix: LAYER_ID_PREFIX,
+		nextLayerContent: DEFAULT_NEXTLAYERCONTENT,
+		layers: [generateNewLayerProps(CURRENT_LAYER_ID, 600, 400)],
+		layersInOrder:[{id:CURRENT_LAYER_ID}],
+		history: []
 	}
 };
 
-function settings(state = initialState.settings, action) {
-	switch(action.type) {
-		case SET_STROKESTYLE:
-			return Object.assign({}, state, {
-				strokeStyle: action.style
-			});
-		case SET_LINEWIDTH:
-			return Object.assign({}, state, {
-				lineWidth: action.width*1
-			});
-		case SET_LINECAP:
-			return Object.assign({}, state, {
-				lineCap: action.cap
-			});
-		case SET_GLOBALCOMPOSITEOPERATION:
-			return Object.assign({}, state, {
-				globalCompositeOperation: action.operation
-			});
-		default:
-			return state;
-	}
-}
-
-function history(state = initialState.history, action) {
-	switch(action.type) {
-		case PUSH_HISTORY: {
-			let nextData = state.data.concat(action.data);
-			let nextCount = state.count;
-			if (state.count >= 50) {
-				nextData.shift();
-			} else {
-				nextCount++;
-			}
-			return Object.assign({}, state, {
-				data: nextData,
-				count: nextCount
-			});
-		}
-		case UNDO_HISTORY: {
-			if ( !state.count ) return state;
-			const dataCache = Object.assign([], state.data);
-			dataCache.pop();
-			return Object.assign({}, state, {
-				data: dataCache,
-				count: state.count - 1
-			});
-		}
-		default:
-			return state;
-	}
-}
-
-const flushPaint = combineReducers({
+const FlushPaint = combineReducers({
+	live,
 	settings,
-	history
+	layers
 });
 
-export default flushPaint;
+export default FlushPaint;

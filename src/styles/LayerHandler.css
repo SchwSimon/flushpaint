@@ -1,0 +1,86 @@
+.LayerHandler .button:hover {
+	background-color: #ececec;
+} .LayerHandler .button:active {
+	background-color: lightgray;
+}
+.LayerHandler-merge,
+.LayerHandler-insertimage,
+.LayerHandler-duplicate,
+.LayerHandler-colortransparent,
+.LayerHandler-colorfill,
+.LayerHandler-clear,
+.LayerHandler-remove {
+	border: 1px solid lightgray;
+	border-top: 0 none;
+	border-radius: 0;
+	margin: -1px 0 0 0;
+	box-shadow: none;
+	padding: 3px 6px;
+} .LayerHandler-merge,
+.LayerHandler-duplicate,
+.LayerHandler-colorfill,
+.LayerHandler-clear {
+	border-right: 1px dashed #cbcbcb;
+} .LayerHandler-insertimage,
+.LayerHandler-colortransparent,
+.LayerHandler-clear,
+.LayerHandler-remove {
+	border-left: 0 none;
+} .LayerHandler-merge {
+	width: 110px;
+} .LayerHandler-insertimage {
+	width: 83px;
+} .LayerHandler-duplicate {
+	width: 60px;
+} .LayerHandler-colortransparent {
+	width: 133px;
+} .LayerHandler-colorfill,
+.LayerHandler-clear,
+.LayerHandler-remove {
+	width: 60px;
+}
+	.LayerHandler-fileinput {
+		position: absolute;
+		top: 0; left: 0;
+		width: 100%;
+		height: 100%;
+		opacity: 0;
+		cursor: pointer;
+	}
+	
+.LayerHandler-addimagelayer {
+	display: block;
+	box-shadow: none;
+	border-radius: 0;
+	margin: 0;
+	padding: 15px 0;
+	border-left: 1px solid lightgray;
+	border-right: 1px solid lightgray;
+}
+
+.LayerHandler-dimension {
+	display: inline-block;
+	vertical-align: middle;
+	padding: 2px 1px 2px 6px;
+	border: 1px solid lightgray;
+	border-right: 0 none;
+}
+	.LayerHandler-dimension span {
+		display: inline-block;
+		vertical-align: middle;
+		font-size: 11px;
+		font-weight: bold;
+	}
+	.LayerHandler-dimensionInput {
+		width: 55px;
+		text-align: center;
+		border: 0 none;
+		padding: 0 0 1px 0;
+	}
+	.LayerHandler-addlayer {
+		border-radius: 0;
+		box-shadow: none;
+		border: 1px solid lightgray;
+		padding: 4px 8px;
+		margin: 0;
+	}

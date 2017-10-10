@@ -1,0 +1,30 @@
+.Crop {
+	position: absolute;
+	top: 0; left: 0;
+	width: 100%;
+	height: 100%;
+}
+	.Crop-selection {
+		position: absolute;
+		border: 1px dashed gray;
+		background-color: rgba(0,0,0,0.1);
+	}
+		.Crop-resize {
+			position: absolute;
+			bottom: -7.5px; right: -7.5px;
+			width: 15px;
+			height: 15px;
+			border-radius: 30px;
+			background-color: gray;
+		}
+		.Crop-submit {
+			position: absolute;
+			bottom: -33px; right: -8px;
+			background-color: white;
+			font-weight: bold;
+			padding: 3px 6px;
+		} .Crop-submit:hover {
+			background-color: #ececec;
+		} .Crop-submit:active {
+			background-color: lightgray;
+		}

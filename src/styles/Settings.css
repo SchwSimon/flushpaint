@@ -1,0 +1,15 @@
+.Settings {
+	padding: 8px 0;
+	width: 750px;
+	margin: 0 auto;
+}
+	.Settings-container {
+		display: inline-block;
+		vertical-align: top;
+		width: 220px;
+		margin: 0 5px;
+		padding: 10px;
+		background: rgb(255, 255, 255) none repeat scroll 0% 0%;
+		border-radius: 4px;
+		box-shadow: rgba(0, 0, 0, 0.15) 0px 0px 0px 1px, rgba(0, 0, 0, 0.15) 0px 8px 16px;
+	}

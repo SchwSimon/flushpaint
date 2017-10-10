@@ -1,0 +1,10 @@
+.History {
+	border-radius: 0;
+	margin: 0;
+	display: block;
+	padding: 5px 0;
+} .History:hover {
+	background-color: #ececec;
+} .History:active {
+	background-color: lightgray;
+}

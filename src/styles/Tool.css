@@ -1,0 +1,42 @@
+.Tool {
+	width: 96px;
+	padding: 3px 6px;
+	border-radius: 0;
+	border: 1px solid lightgray;
+} .Tool:hover {
+	background-color: #cfc;
+} .Tool-active {
+	background-color: #9f9;
+}
+
+.Tool-BRUSH,
+.Tool-ERASER,
+.Tool-CROP,
+.Tool-PIPETTE,
+.Tool-MOVE,
+.Tool-TEXT {
+	box-shadow: none;
+	margin: 0;
+} .Tool-BRUSH,
+.Tool-ERASER,
+.Tool-CROP {
+	width: 97px;
+	border-right: 1px dashed #cbcbcb;
+} .Tool-PIPETTE,
+.Tool-MOVE {
+	border-left: 0 none;
+} .Tool-TEXT,
+.Tool-CROP,
+.Tool-MOVE {
+	border-top: 0 none;
+} .Tool-CROP,
+.Tool-MOVE {
+	margin-top: -1px;
+} .Tool-BRUSH {
+	border-bottom: 0 none;
+} .Tool-TEXT {
+	width: 206px;
+} 
+
+
+

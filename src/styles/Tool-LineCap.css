@@ -1,0 +1,41 @@
+.LineCap-button {
+	position: relative;
+	display: inline-block;
+	vertical-align: middle;
+	height: 39px;
+	width: 72px;
+	text-align: center;
+	border-left: 1px solid lightgray;
+} .LineCap-button:last-child {
+	border-right: 1px solid lightgray;
+} .LineCap-button:hover {
+	box-shadow: inset 0 0 0 1px lightgray;
+} .LineCap-button.active {
+	box-shadow: inset 0 0 3px 1px lightgray;
+}
+	.LineCap-button .centerer,
+	.LineCap-button .round,
+	.LineCap-button .square,
+	.LineCap-button .butt {
+		display: inline-block;
+		vertical-align: middle;
+	} .LineCap-button .centerer {
+		height: 100%;
+	} .LineCap-button .round,
+	.LineCap-button .square {
+		height: 20px;
+		width: 20px;
+	} .LineCap-button .round {
+		border-radius: 20px;
+	} .LineCap-button .butt {
+		height: 2px;
+		width: 70%
+	}
+	.LineCap-trigger {
+		position: absolute;
+		top: 0; left: 0;
+		width: 100%;
+		height: 100%;
+		cursor: pointer;
+	}
+	

@@ -1,0 +1,14 @@
+.Layer {
+	position: absolute;
+	top: 0; left: 0;
+	box-sizing: border-box;
+	box-shadow: black 0px 0 0 1px;
+} .Layer:hover {
+	box-shadow: orange 0px 0 4px 0;
+} .Layer:active,
+.Layer.selected {
+	box-shadow: lime 0px 0 4px 1px;
+}
+	.canvas {
+		display: block;
+	}

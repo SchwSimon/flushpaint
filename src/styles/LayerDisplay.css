@@ -1,0 +1,75 @@
+.LayerDisplay {
+	border: 1px solid rgb(204, 204, 204);
+	border-right: 0 none;
+}
+	.LayerDisplay-list {
+		height: 160px;
+		overflow-y: scroll;
+	}
+		.LayerDisplay-layer {
+			position: relative;
+			text-align: left;
+			padding: 4px 0 4px 30px;
+			border-bottom: 1px solid lightgray;
+		} .LayerDisplay-layer:hover {
+			background-color: #f2f2f2;
+		} .LayerDisplay-layer.active {
+			background-color: rgb(230, 230, 230);
+		}
+			.LayerDisplay-layer-dragHandle {
+				position: absolute;
+				top: 0; left: 0;
+				width: 30px;
+				height: 100%;
+				cursor: grab;
+			} .LayerDisplay-layer-dragHandle:active {
+				cursor: grabbing;
+			}
+				.LayerDisplay-layer-dragHandle-icon {
+					display: inline-block;
+					border-top: 2px solid gray;
+					width: 20px;
+					padding-top: 2px;
+					margin: 10.5px 0 0 5px;
+				} .LayerDisplay-layer-dragHandle-icon:before,
+				.LayerDisplay-layer-dragHandle-icon:after {
+					display: block;
+					content: "";
+					border-top: 2px solid gray;
+					padding-top: 2px;
+				}
+			.LayerDisplay-layer-title {
+				display: block;
+				padding: 2px 6px 4px;
+				width: 135px;
+				border: 0 none;
+				box-shadow: rgb(204, 204, 204) 0px 0px 0px 1px inset;
+				background-color: white;
+				border-radius: 4px;
+				color: brown;
+			} .LayerDisplay-layer-title[disabled] {
+				background-color: whitesmoke;
+			}
+			.LayerDisplay-layer-trigger {
+				position: absolute;
+				top: 0; left: 30px;
+				height: 100%;
+				width: 150px;
+			}
+			.LayerDisplay-layer-visibility {
+				position: absolute;
+				top: 0; right: 0;
+				height: 100%;
+				width: 24px;
+			}
+				.LayerDisplay-layer-visibilityTrigger {
+					cursor: pointer;
+					width: 14px;
+					height: 14px;
+					border: 1px solid #adadad;
+					border-radius: 20px;
+					margin: 7.5px 0 0 4px;
+					background-color: #ffbfba;
+				} .LayerDisplay-layer-visibilityTrigger[data-visibility="true"] {
+					background-color: #caff99;
+				}

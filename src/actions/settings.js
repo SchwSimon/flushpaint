@@ -1,29 +1,40 @@
-/**
- *		LIVE
- */
+/***
+ *	Constants
+ **/
+	// Live
 export const TOGGLE_DRAWING = 'TOGGLE_DRAWING';
 export const TOGGLE_MOVING = 'TOGGLE_MOVING';
 export const SET_INTERACTIONTIMEOUT = 'SET_INTERACTIONTIMEOUT';
-
-export function toggleDrawing(bool, layerID) {
-	return { type: TOGGLE_DRAWING, bool, layerID }
-}
-export function toggleMoving(bool, layerID) {
-	return { type: TOGGLE_MOVING, bool, layerID }
-}
-export function setInteractionTimeout(timeout) {
-	return { type: SET_INTERACTIONTIMEOUT, timeout }
-}
-
-
-/**
- *		SETTINGS
- */
+	
+	// Settings
 export const SET_STROKESTYLE = 'SET_STROKESTYLE';
 export const SET_LINEWIDTH = 'SET_LINEWIDTH';
 export const SET_LINECAP = 'SET_LINECAP';
 export const SET_GLOBALCOMPOSITEOPERATION = 'SET_GLOBALCOMPOSITEOPERATION';
 export const SET_TOOL = 'SET_TOOL';
+
+	// Layerr
+export const ADD_LAYER = 'ADD_LAYER';
+export const SELECT_LAYER = 'SELECT_LAYER';
+export const TOGGLE_LAYER = 'TOGGLE_LAYER';
+export const SORT_LAYERORDER = 'SORT_LAYERORDER';
+export const FILL_LAYER = 'FILL_LAYER';
+export const CLEAR_LAYER = 'CLEAR_LAYER';
+export const REMOVE_LAYER = 'REMOVE_LAYER';
+export const MERGE_LAYERS = 'MERGE_LAYERS';
+export const SET_LAYERTITLE = 'SET_LAYERTITLE';
+export const SET_NEXTLAYERCONTENT = 'SET_NEXTLAYERCONTENT';
+export const SET_COLORTOTRANSPARENT = 'SET_COLORTOTRANSPARENT';
+export const RESIZE_LAYER = 'RESIZE_LAYER';
+export const PUT_LAYERIMAGEDATA = 'PUT_LAYERIMAGEDATA';
+export const DRAW_LAYERIMAGE = 'DRAW_LAYERIMAGE';
+// Layers History
+export const PUSH_HISTORY = 'PUSH_HISTORY';
+export const UNDO_HISTORY = 'UNDO_HISTORY';
+
+/*
+ * Settings
+ */
 export const LineCaps = {
 	ROUND: 'round',
 	SQUARE: 'square',
@@ -72,6 +83,22 @@ export const layerContentTypes = {
 	FILLCOLOR: 'fillcolor'
 }
 
+
+/***
+ *	Functions
+ **/
+	// Live
+export function toggleDrawing(bool, layerID) {
+	return { type: TOGGLE_DRAWING, bool, layerID }
+}
+export function toggleMoving(bool, layerID) {
+	return { type: TOGGLE_MOVING, bool, layerID }
+}
+export function setInteractionTimeout(timeout) {
+	return { type: SET_INTERACTIONTIMEOUT, timeout }
+}
+ 
+	// Settings
 export function setStrokeStyle(style) {
 	return { type: SET_STROKESTYLE, style };
 }
@@ -88,27 +115,7 @@ export function setTool(tool) {
 	return { type: SET_TOOL, tool };
 }
 
-
-/**
- *		LAYERS
- */
-export const ADD_LAYER = 'ADD_LAYER';
-export const SELECT_LAYER = 'SELECT_LAYER';
-export const TOGGLE_LAYER = 'TOGGLE_LAYER';
-export const SORT_LAYERORDER = 'SORT_LAYERORDER';
-export const FILL_LAYER = 'FILL_LAYER';
-export const CLEAR_LAYER = 'CLEAR_LAYER';
-export const REMOVE_LAYER = 'REMOVE_LAYER';
-export const MERGE_LAYERS = 'MERGE_LAYERS';
-export const SET_LAYERTITLE = 'SET_LAYERTITLE';
-export const SET_NEXTLAYERCONTENT = 'SET_NEXTLAYERCONTENT';
-export const SET_COLORTOTRANSPARENT = 'SET_COLORTOTRANSPARENT';
-export const RESIZE_LAYER = 'RESIZE_LAYER';
-export const PUT_LAYERIMAGEDATA = 'PUT_LAYERIMAGEDATA';
-export const DRAW_LAYERIMAGE = 'DRAW_LAYERIMAGE';
-export const PUSH_HISTORY = 'PUSH_HISTORY';
-export const UNDO_HISTORY = 'UNDO_HISTORY';
-
+	// Layers
 export function addLayer(dimensions) {
 	return { type: ADD_LAYER, dimensions };
 }
@@ -151,6 +158,7 @@ export function putLayerImageData(layerID, imageData) {
 export function drawLayerImage(layerID, image) {
 	return { type: DRAW_LAYERIMAGE, layerID, image }
 }
+// Layers History
 export function pushHistory(layerID) {
 	return { type: PUSH_HISTORY, layerID };
 }

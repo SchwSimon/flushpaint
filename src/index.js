@@ -1,19 +1,30 @@
+// react dependencies
 import React from 'react';
 import ReactDOM from 'react-dom';
 
+// redux dependencies
 import { Provider } from 'react-redux';
 import { createStore } from 'redux';
 
-import flushPaint from './reducers/index';
+// service worker dependencies for Progressive Web Apps
+import registerServiceWorker from './registerServiceWorker';
 
+// global styles
 import './index.css';
-import App from './App';
 
-let store = createStore(flushPaint);
+// FlushPaint reducer
+import FlushPaint from './reducers/index';
 
-// store.subscribe(() => {
-	// console.log(store.getState())
-// });
+// Apps
+import App from './containers/App';
+
+// the store
+let store = createStore(FlushPaint);
+
+// log store changes
+store.subscribe(() => {
+	console.log(store.getState())
+});
 
 ReactDOM.render(
 	<Provider store={store}>
@@ -21,3 +32,6 @@ ReactDOM.render(
 	</Provider>,
 	document.getElementById('root')
 );
+
+// register service worker...
+registerServiceWorker();

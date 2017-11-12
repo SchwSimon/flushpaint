@@ -10,17 +10,14 @@ import LayerHandler from  '../components/LayerHandler';
 import LayerRenderer from '../components/LayerRenderer';
 import { SketchPicker } from 'react-color';
 
-import {
-	ToolList,
-	setStrokeStyle
-} from '../actions/index';
+import { ToolList, setStrokeStyle } from '../actions/index';
 
 import '../styles/Settings.css';
 
 /**
  * Main settings container
  */
-class Settings extends PureComponent {	
+export class Settings extends PureComponent {
 	render() {
 		return (
 			<div className="Settings">

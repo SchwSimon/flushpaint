@@ -19,7 +19,7 @@ import {
 import '../styles/LayerHandler.css';
 
 // read and load an image from file
-// callback with a loaded Image object 
+// callback with a loaded Image object
 function loadImageFromFile(file, callback) {
 	var fileReader = new FileReader();
 	fileReader.addEventListener('load', function onLoad() {
@@ -28,7 +28,7 @@ function loadImageFromFile(file, callback) {
 		const image = new Image();
 		image.addEventListener('load', function onLoad() {
 			this.removeEventListener('load', onLoad, false);
-			
+
 			callback(this);
 		}, false);
 		image.src = this.result;
@@ -42,7 +42,7 @@ function loadImageFromFile(file, callback) {
 class LayerHandler extends PureComponent {
 	constructor(props) {
 		super(props);
-		
+
 		this.addLayer = this.addLayer.bind(this);
 		this.fillLayer = this.fillLayer.bind(this);
 		this.clearLayer = this.clearLayer.bind(this);
@@ -53,7 +53,7 @@ class LayerHandler extends PureComponent {
 		this.insertImage = this.insertImage.bind(this);
 		this.colorToTransparent = this.colorToTransparent.bind(this);
 	}
-	
+
 	// add a new layer
 	addLayer() {
 		this.props.dispatch(addLayer({
@@ -61,7 +61,7 @@ class LayerHandler extends PureComponent {
 			height: this.layerHeight.value
 		}));
 	}
-	
+
 	// add a new layer with the given input image
 	addImageLayer(event) {
 		const self = this;
@@ -78,7 +78,7 @@ class LayerHandler extends PureComponent {
 			}));
 		});
 	}
-	
+
 	// insert an image to the selected layer
 	insertImage(event) {
 			// do nothing if no layer is selected
@@ -93,33 +93,33 @@ class LayerHandler extends PureComponent {
 			));
 		});
 	}
-	
+
 	// fill the selected layer with the currently selected color
 	fillLayer() {
 			// push history
 		this.props.dispatch(pushHistory(this.props.selectedLayerID));
 		this.props.dispatch(fillLayer(this.props.selectedLayerID, this.props.selectedColor));
 	}
-	
+
 	// make the selected layer fully transparent
 	clearLayer() {
 			// push history
 		this.props.dispatch(pushHistory(this.props.selectedLayerID));
 		this.props.dispatch(clearLayer(this.props.selectedLayerID));
 	}
-	
+
 	// delete the selected layer
 	removeLayer() {
 		this.props.dispatch(removeLayer(this.props.selectedLayerID));
 	}
-	
+
 	// turn the selected color with a tolerance to transparent on the selected layer
 	colorToTransparent() {
 			// push history
 		this.props.dispatch(pushHistory(this.props.selectedLayerID));
 		this.props.dispatch(setColorToTransparent(this.props.selectedLayerID, this.props.selectedColor));
 	}
-	
+
 	// clone the selected layer
 	clone() {
 			// return is no layer is selected
@@ -132,19 +132,19 @@ class LayerHandler extends PureComponent {
 			// set any dimensions, clone will resize to the right dimensions
 		this.props.dispatch(addLayer({width:1,height:1}));
 	}
-	
+
 	// merge the selected layer with the next lower layer
 	merge() {
 			// return if no layer is selected
 		if (!this.props.selectedLayerID) return;
 			// get the ordered array index of the selected layer
-		const index = this.props.layersOrder.findIndex(layer => layer.id === this.props.selectedLayerID);
+		const nextLayerId = this.props.layers.findIndex(layer => layer.id === this.props.selectedLayerID) - 1;
 			// return if there is no next layer
-		if (!this.props.layersOrder[index+1]) return;
+		if (!this.props.layers[nextLayerId]) return;
 			// push only the destination layer's history
-		this.props.dispatch(pushHistory(this.props.layersOrder[index+1].id));
+		this.props.dispatch(pushHistory(this.props.layers[nextLayerId].id));
 			// dispatch the layer merging
-		this.props.dispatch(mergeLayers(this.props.selectedLayerID, this.props.layersOrder[index+1].id));
+		this.props.dispatch(mergeLayers(this.props.selectedLayerID, this.props.layers[nextLayerId].id));
 			// remove the selected layer (merge source)
 		this.props.dispatch(removeLayer(this.props.selectedLayerID));
 	}
@@ -185,7 +185,6 @@ export default connect(
 	state => ({
 		selectedColor: state.settings.strokeStyle,	// the selected color
 		selectedLayerID: state.layers.selectedID,	// the selected layer id
-		layersOrder: state.layers.layersInOrder,		// the layer in order array
 		layers: state.layers.layers							// the layers array
 	})
 )(LayerHandler);

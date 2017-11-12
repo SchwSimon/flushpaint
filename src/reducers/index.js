@@ -7,13 +7,7 @@ import {
 
 import { live } from './live';
 import { settings } from './settings';
-import {
-	layers,
-	generateNewLayerProps,
-	DEFAULT_NEXTLAYERCONTENT,
-	CURRENT_LAYER_ID,
-	LAYER_ID_PREFIX
-} from './layers';
+import layers, { layersInitialState } from './layers';
 
 export const initialState = {
 	live: {
@@ -29,14 +23,7 @@ export const initialState = {
 		globalCompositeOperation: GlobalCompositeOperations.SOURCE_OVER,
 		tool: ToolList.BRUSH
 	},
-	layers: {
-		selectedID: CURRENT_LAYER_ID,
-		idPrefix: LAYER_ID_PREFIX,
-		nextLayerContent: DEFAULT_NEXTLAYERCONTENT,
-		layers: [generateNewLayerProps(CURRENT_LAYER_ID, 600, 400)],
-		layersInOrder:[{id:CURRENT_LAYER_ID}],
-		history: []
-	}
+	layers: layersInitialState
 };
 
 const FlushPaint = combineReducers({

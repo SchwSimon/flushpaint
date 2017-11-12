@@ -5,7 +5,7 @@ import '../styles/Header.css';
 /**
  * Main settings container
  */
-class Header extends PureComponent {	
+export class Header extends PureComponent {	
 	render() {
 		return (
 			<div className="Header">

@@ -1,139 +1,186 @@
-import { initialState } from './index';
-import {	arrayMove } from 'react-sortable-hoc';
-import {
-	ADD_LAYER,
-	SELECT_LAYER,
-	TOGGLE_LAYER,
-	SORT_LAYERORDER,
-	FILL_LAYER,
-	CLEAR_LAYER,
-	REMOVE_LAYER,
-	MERGE_LAYERS,
-	SET_LAYERTITLE,
-	SET_NEXTLAYERCONTENT,
-	SET_COLORTOTRANSPARENT,
-	RESIZE_LAYER,
-	PUT_LAYERIMAGEDATA,
-	DRAW_LAYERIMAGE,
-	PUSH_HISTORY,
-	UNDO_HISTORY,
-	layerContentTypes
-} from '../actions/index';
+import { arrayMove } from 'react-sortable-hoc';
+import { ADD_LAYER, SELECT_LAYER, TOGGLE_LAYER, SORT_LAYERORDER, LAYER_OPERATION_FILL,
+ LAYER_OPERATION_CLEAR, REMOVE_LAYER, MERGE_LAYERS, SET_LAYERTITLE, SET_NEXTLAYERCONTENT,
+ LAYER_OPERATION_COLORTOTRANSPARENT, LAYER_OPERATION_RESIZE, LAYER_OPERATION_IMAGEDATA, LAYER_OPERATION_IMAGE,
+ PUSH_HISTORY, LAYER_OPERATION_UNDO, LAYER_OPERATION_DONE, layerContentTypes, LAYER_OPERATION_CROP } from '../actions/index';
+import layerIdHandler from './layers/layerIdHandler';
+import generateLayerStructure, { LAYER_ID_PREFIX } from './layers/generateLayerStructure';
 
-// Auto incremented unqie layer IDs
-export let CURRENT_LAYER_ID = 1;
-
-export const LAYER_ID_PREFIX = 'Layer-';
-export const DEFAULT_NEXTLAYERCONTENT = {
-	type: layerContentTypes.FILLCOLOR,
-	data: 'white'
+export const layersInitialState = {
+	selectedID: null,
+	idPrefix: LAYER_ID_PREFIX,
+	nextLayerContent: {
+		type: layerContentTypes.FILLCOLOR,
+		data: 'white'
+	},
+	layers: [],
+  layerOperation: null,
+	history: [],
+	maxHistory: 50
 };
 
-export function generateNewLayerProps(id, width = 600, height = 400) {
-	return {
-		id: id,
-		isVisible: true,
-		width: width,
-		height: height,
-		title: 'Layer ' + id
-	}
-}
-
-const MAX_HISTORY = 50;
-
-export function layers(state = initialState.layers, action) {
+const layers = (state = layersInitialState, action) => {
 	switch(action.type) {
 		case ADD_LAYER: {
-			CURRENT_LAYER_ID++;
+			const layerID = layerIdHandler.next();
 			return Object.assign({}, state, {
-				selectedID: CURRENT_LAYER_ID,
+				selectedID: layerID,
 				layers: state.layers.concat([
-					generateNewLayerProps(
-						CURRENT_LAYER_ID,
-						action.dimensions.width*1,
-						action.dimensions.height*1
+					generateLayerStructure(
+						layerID,
+            action.dimensions.width,
+						action.dimensions.height
 					)
 				]),
-				layersInOrder: [{id: CURRENT_LAYER_ID}].concat(state.layersInOrder)
+        layerOperation: {
+          id: layerID,
+          type: LAYER_OPERATION_FILL,
+          color: 'white'
+        }
 			});
 		}
+
+    case REMOVE_LAYER: {
+      action.layerID = action.layerID*1
+			if (!action.layerID) break;
+			return Object.assign({}, state, {
+				selectedID: (state.selectedID === action.layerID) ? null : state.selectedID,
+				layers: state.layers.filter(layer => layer.id !== action.layerID),
+        history: state.history.filter(layer => layer.id !== action.layerID)
+			});
+		}
+
 		case SELECT_LAYER:
 			return Object.assign({}, state, {
 				selectedID: action.layerID*1
 			});
-		case TOGGLE_LAYER:
+
+		case TOGGLE_LAYER: {
+			action.layerID = action.layerID*1;
 			return Object.assign({}, state, {
-				layers: state.layers.map((layer) => {
-					if (layer.id === action.layerID*1)
-						layer.isVisible = !layer.isVisible
+				layers: state.layers.map(layer => {
+					if (layer.id === action.layerID)
+						return Object.assign({}, layer, {
+							isVisible: !layer.isVisible
+						});
 					return layer;
 				})
 			});
-		case SORT_LAYERORDER: {
-			const newState = Object.assign({}, state, {
-				layersInOrder: arrayMove(state.layersInOrder, action.oldIndex, action.newIndex)
-			});
-			const drawboard = document.getElementById('Drawboard');
-			newState.layersInOrder.forEach((layer) => {
-				drawboard.insertBefore(
-					document.getElementById(LAYER_ID_PREFIX + layer.id).parentNode,
-					drawboard.firstChild
-				);
-			});
-			return newState;
 		}
-		case FILL_LAYER: {
-			if (!action.layerID) return state;
-			const layer = document.getElementById(LAYER_ID_PREFIX + action.layerID);
-			const ctx = layer.getContext('2d');
-			ctx.fillStyle = action.color;
-			ctx.rect( 0, 0, layer.width, layer.height );
-			ctx.globalCompositeOperation = "source-over";
-			ctx.fill();
-			return state;
-		}
-		case CLEAR_LAYER: {
-			if (!action.layerID) return state;
-			const layer = document.getElementById(LAYER_ID_PREFIX + action.layerID);
-			const ctx = layer.getContext('2d');
-			ctx.fillStyle = 'rgba(0,0,0,1)';
-			ctx.rect( 0, 0, layer.width, layer.height );
-			ctx.globalCompositeOperation = "destination-out";
-			ctx.fill();
-			return state;
-		}
-		case REMOVE_LAYER: {
-			if (!action.layerID) return state;
+
+		case SORT_LAYERORDER:
 			return Object.assign({}, state, {
-				selectedID: null,
-				layers: state.layers.filter((layer) => {
-					return layer.id !== action.layerID*1;
-				}),
-				layersInOrder: state.layersInOrder.filter((layer) => {
-					return layer.id !== action.layerID*1;
-				})
+        layers: arrayMove(state.layers, action.oldIndex, action.newIndex)
 			});
-		}
-		case SET_COLORTOTRANSPARENT: {
-			if (!action.layerID) return state;
-			const layer = document.getElementById(LAYER_ID_PREFIX + action.layerID);
-			const ctx = layer.getContext('2d');
-			const imgData = ctx.getImageData(0, 0, layer.width, layer.height);
-			const px = imgData.data;
-			const rgb = action.color.split(',');
-			rgb[0] = rgb[0].replace( /\D/g, "" );	// get numbers only
-			rgb[1] = rgb[1].replace( /\D/g, "" );
-			rgb[2] = rgb[2].replace( /\D/g, "" );
-			for (let i = 0, len = px.length; i < len; i+=4) {
-				if (Math.abs(px[i] - rgb[0]) + Math.abs(px[i+1] - rgb[1]) + Math.abs(px[i+2] - rgb[2]) <= 30) {
-					// set the pixel to transparent if its color is in tolerance
-					px[i+3] = 0;
-				}
-			}
-			ctx.putImageData(imgData, 0, 0);
-			return state;
-		}
-		case SET_LAYERTITLE: {
+
+    case LAYER_OPERATION_DONE:
+      return Object.assign({}, state, {
+        layerOperation: null
+      });
+
+		case LAYER_OPERATION_FILL:
+			if (action.layerID) {
+        return Object.assign({}, state, {
+          layerOperation: {
+            id: action.layerID,
+            type: LAYER_OPERATION_FILL,
+            color: action.color
+          }
+  			});
+      }
+			break;
+
+		case LAYER_OPERATION_CLEAR:
+      if (action.layerID) {
+        return Object.assign({}, state, {
+          layerOperation: {
+            id: action.layerID,
+            type: LAYER_OPERATION_CLEAR
+          }
+        });
+      }
+      break;
+
+		case LAYER_OPERATION_COLORTOTRANSPARENT:
+			if (action.layerID) {
+        return Object.assign({}, state, {
+          layerOperation: {
+            id: action.layerID,
+            type: LAYER_OPERATION_COLORTOTRANSPARENT,
+            color: action.color
+          }
+  			});
+      }
+			break;
+
+    case LAYER_OPERATION_IMAGEDATA:
+      if (action.layerID) {
+        return Object.assign({}, state, {
+          layerOperation: {
+            id: action.layerID,
+            type: LAYER_OPERATION_IMAGEDATA,
+            imageData: action.imageData
+          }
+  			});
+      }
+			break;
+
+    case LAYER_OPERATION_IMAGE:
+      if (action.layerID) {
+        return Object.assign({}, state, {
+          layerOperation: {
+            id: action.layerID,
+            type: LAYER_OPERATION_IMAGE,
+            image: action.image
+          }
+  			});
+      }
+			break;
+
+    case LAYER_OPERATION_CROP:
+    if (action.layerID) {
+      return Object.assign({}, state, {
+        layers: /// set dimensions...
+        layerOperation: {
+          id: action.layerID,
+          type: LAYER_OPERATION_CROP,
+          cropData: action.cropData
+        }
+      });
+    }
+    break;
+
+    case LAYER_OPERATION_UNDO:
+      if (!state.history.length) break;
+      const newState = Object.assign({}, state);
+      const lastHistoryData = newState.history.pop();
+      return Object.assign({}, state, {
+        history: newState.history,
+        layers: /// set dimensions...
+        layerOperation: {
+          id: lastHistoryData.layerID,
+          type: LAYER_OPERATION_UNDO,
+          imageData: lastHistoryData.data
+        }
+      });
+
+    case LAYER_OPERATION_RESIZE:
+      if (action.layerID) {
+        action.layerID = action.layerID*1;
+        return Object.assign({}, state, {
+          layers: state.layers.map(layer => {
+            if (layer.id === action.layerID)
+              return Object.assign({}, layer, {
+                width: action.dimensions.width,
+                height: action.dimensions.height
+              });
+            return layer;
+          })
+        });
+      }
+			break;
+
+		case SET_LAYERTITLE:
 			return Object.assign({}, state, {
 				layers: state.layers.map((layer, index) => {
 					if (layer.id === action.layerID*1)
@@ -141,35 +188,19 @@ export function layers(state = initialState.layers, action) {
 					return layer;
 				})
 			});
-		}
+
 		case SET_NEXTLAYERCONTENT: {
-			const content = action.content || DEFAULT_NEXTLAYERCONTENT;
+			if (!action.content) break;
 			return Object.assign({}, state, {
 				nextLayerContent: {
-					type: content.type,
-					data: content.data
+					type: action.content.type,
+					data: action.content.data
 				}
 			});
 		}
-		case RESIZE_LAYER:
-			return Object.assign({}, state, {
-				layers: state.layers.map((layer) => {
-					if (layer.id === action.layerID*1) {
-						layer.width = action.dimensions.width*1;
-						layer.height = action.dimensions.height*1;
-					}
-					return layer;
-				})
-			});
-		case PUT_LAYERIMAGEDATA: {
-			setTimeout(() => {
-				// make async with timeout otherwise putted data will be lost
-				document.getElementById(LAYER_ID_PREFIX + action.layerID)
-					.getContext('2d')
-						.putImageData(action.imageData, 0, 0);
-			}, 1);
-			return state;
-		}
+
+
+
 		case MERGE_LAYERS: {
 			const layerSource = document.getElementById(LAYER_ID_PREFIX + action.sourceLayerID);
 			const layerDest = document.getElementById(LAYER_ID_PREFIX + action.destLayerID);
@@ -180,19 +211,9 @@ export function layers(state = initialState.layers, action) {
 				-(destRect.x - sourceRect.x),
 				-(destRect.y - sourceRect.y)
 			);
-			return state;
+      break;
 		}
-		case DRAW_LAYERIMAGE: {
-			const layer = document.getElementById(LAYER_ID_PREFIX + action.layerID);
-			layer.getContext('2d').drawImage(
-				action.image,
-				((layer.width/2) - (action.image.width/2)),
-				((layer.height/2) - (action.image.height/2)),
-				action.image.width,
-				action.image.height
-			);
-			return state;
-		}
+
 		case PUSH_HISTORY: {
 			if (!action.layerID) return state;
 			const layer = document.getElementById(LAYER_ID_PREFIX + action.layerID);
@@ -204,49 +225,17 @@ export function layers(state = initialState.layers, action) {
 					layer.height
 				)
 			});
-			if (state.history.length >= MAX_HISTORY)
+			if (state.history.length >= state.maxHistory)
 				nextData.shift();
 			return Object.assign({}, state, {
 				history: nextData
 			});
 		}
-		case UNDO_HISTORY: {
-			if (!state.history.length) return state;
-			let newHistory = Object.assign([], state.history);
-			let popData = newHistory.pop();
-			let layer = document.getElementById(LAYER_ID_PREFIX + popData.layerID);
-			if ( !layer ) {
-				newHistory = newHistory.filter((history) => {
-					return history.layerID !== popData.layerID
-				});
-				popData = newHistory.pop();
-				if (!popData) return Object.assign({}, state, {
-					history: newHistory
-				});
-				layer = document.getElementById(LAYER_ID_PREFIX + popData.layerID);
-			}
-			let layers = Object.assign([], state.layers);
-			if (layer.width !== popData.data.width || layer.height !== popData.data.height) {
-				layer.width = popData.data.width;
-				layer.height = popData.data.height;
-				layers = state.layers.map((layer) => {
-					if (layer.id === popData.layerID) {
-						layer.width = popData.data.width;
-						layer.height = popData.data.height;
-					}
-					return layer;
-				});
-			}
-			setTimeout(() => {
-				// make async with timeout otherwise putted data will be lost
-				layer.getContext('2d').putImageData(popData.data, 0, 0);
-			}, 1)
-			return Object.assign({}, state, {
-				layers: layers,
-				history: newHistory
-			});
-		}
-		default:
-			return state;
+
+		default: break;
 	}
+
+	return state;
 }
+
+export default layers;

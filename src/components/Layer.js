@@ -1,58 +1,55 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
-
 import TextBox from '../components/Tool-TextBox';
 import Crop from '../components/Tool-Crop';
-
-import {
-	toggleDrawing,
-	toggleMoving,
-	setInteractionTimeout,
-	pushHistory,
-	resizeLayer,
-	ToolList,
-	GlobalCompositeOperations,
-	setStrokeStyle,
-	selectLayer,
-	fillLayer,
-	layerContentTypes,
-	setNextLayerContent
-} from '../actions/index';
+import { toggleDrawing, toggleMoving, setInteractionTimeout,
+ pushHistory, resizeLayer, ToolList, GlobalCompositeOperations,
+ setStrokeStyle, selectLayer, fillLayer, layerContentTypes,
+ setNextLayerContent, layerOperationDone,
+ LAYER_OPERATION_FILL, LAYER_OPERATION_CLEAR, LAYER_OPERATION_COLORTOTRANSPARENT,
+ LAYER_OPERATION_IMAGEDATA, LAYER_OPERATION_IMAGE, LAYER_OPERATION_UNDO,
+ LAYER_OPERATION_RESIZE, LAYER_OPERATION_CROP } from '../actions/index';
 
 import '../styles/Layer.css';
 
 class Layer extends Component {
 	constructor(props) {
 		super(props);
-		
+
 		this.state = {
 			showTextbox: false,
 			top: 0,	// the layer's top position
 			left: 0	// the layer's left position
 		};
-		
+
 		this.mouseDown = this.mouseDown.bind(this);
 		this.disableInteraction = this.disableInteraction.bind(this);
 		this.mouseMove = this.mouseMove.bind(this);
 		this.onMouseOut = this.onMouseOut.bind(this);
 		this.onTextPrint = this.onTextPrint.bind(this);
 	}
-	
+
 	componentDidMount() {
+		if (!this.props.layerOperation || this.props.layerOperation.id !== this.props.layerID) return;
+		this.doLayerOperation(this.props.layerOperation);
+			// center this layer
+		this.centerLayer();
+		return;
+		//////////////////////////////////
 			// set the new layer's default content
 		switch(this.props.nextLayerContent.type) {
-			
+
 				// make this layer a clone of the given source layer
-			case layerContentTypes.CLONE: {
+			case layerContentTypes.CLONE:
 					// get the clone layer source
 				const cloneSourceLayer = document.getElementById(this.props.layerIdPrefix + this.props.nextLayerContent.data);
-					
+
 					// resize this layer to the clone source dimensions
 				this.props.dispatch(resizeLayer(this.props.layerID, {
 					width: cloneSourceLayer.width,
 					height: cloneSourceLayer.height
 				}));
-				
+
 					// make async otherwise data will be lost..
 				return setTimeout(() => {
 						// put the clone source image data to this layer
@@ -65,26 +62,25 @@ class Layer extends Component {
 						// center this layer
 					this.centerLayer();
 				}, 1);
-			}
-			
+
 				// draw the given image on to this layer
-			case layerContentTypes.IMAGE: {
+			case layerContentTypes.IMAGE:
 				this.layer.getContext('2d').drawImage(
 					this.props.nextLayerContent.data,
 					0, 0,
 					this.layer.width,
 					this.layer.height
 				);
-			} break;
-			
+				break;
+
 				// put the given image data on to this layer
-			case layerContentTypes.IMAGEDATA: {
+			case layerContentTypes.IMAGEDATA:
 				this.layer.getContext('2d').putImageData(
 					this.props.nextLayerContent.data,
 					0, 0
 				);
-			} break;
-			
+				break;
+
 				// fill this layer with the given color, this is also the default behaviour
 			case layerContentTypes.FILLCOLOR:
 			default: this.props.dispatch(fillLayer(this.props.layerID, this.props.nextLayerContent.data));
@@ -94,7 +90,7 @@ class Layer extends Component {
 			// center this layer
 		this.centerLayer();
 	}
-	
+
 		// center the layer in relation to the drawboard
 	centerLayer() {
 		const drawboard = document.getElementById('Drawboard');
@@ -103,18 +99,18 @@ class Layer extends Component {
 			left: ((drawboard.clientWidth/2) - (this.layer.width/2))
 		});
 	}
-	
+
 		// layer's mouse down handler
 	mouseDown(event) {
 		// prevent right click
 		if (event.button === 2) return;
-		
+
 		event.preventDefault();
 		event.stopPropagation();
-		
+
 		const clientX = event.clientX;
 		const clientY = event.clientY;
-		
+
 		const clientRect = this.layer.getBoundingClientRect();
 			// set the cursor's coordinates and the layer's offset position
 		this.setState({
@@ -129,7 +125,7 @@ class Layer extends Component {
 					return this.enableDrawing();
 				case ToolList.MOVE:					// enable layer moving
 					return this.enableMoving();
-				case ToolList.PIPETTE:				// get the clicked color 
+				case ToolList.PIPETTE:				// get the clicked color
 					return this.absorbColor();
 				case ToolList.TEXT:					// show text editor
 					return this.setState({
@@ -141,11 +137,11 @@ class Layer extends Component {
 			}
 		});
 	}
-	
+
 	// set the clicked color as selected color
 	absorbColor() {
 			// the pixel color data
-		const color = this.layer.getContext( "2d" ).getImageData( 
+		const color = this.layer.getContext( "2d" ).getImageData(
 			this.state.clientX - this.state.offsetLeft,
 			this.state.clientY - this.state.offsetTop,
 			1, 1
@@ -153,7 +149,7 @@ class Layer extends Component {
 			// set pixel color as selected color
 		this.props.dispatch(setStrokeStyle(color));
 	}
-	
+
 	// on mouse move on this layer
 	mouseMove(event) {
 		event.preventDefault();
@@ -168,7 +164,7 @@ class Layer extends Component {
 		else if (this.props.live.isMoving)
 			return this.move(event.clientX, event.clientY);
 	}
-	
+
 	// enable layer moving for this layer
 	enableMoving() {
 			// clear the mouse out timeout
@@ -178,7 +174,7 @@ class Layer extends Component {
 			// enable layer moving for this layer
 		this.props.dispatch(toggleMoving(true, this.props.layerID));
 	}
-	
+
 	// enable drawing for this layer
 	enableDrawing() {
 			// clear the mouse out timeout
@@ -201,7 +197,7 @@ class Layer extends Component {
 			// trigger draw here to draw even if the user clicked only once without moving
 		this.draw();
 	}
-	
+
 	// disable the live interaction (drawing/moving)
 	disableInteraction() {
 			// clear the mouse out timeout
@@ -211,7 +207,7 @@ class Layer extends Component {
 			// disable layer moving
 		this.props.dispatch(toggleMoving(false));
 	}
-	
+
 	// start a timeout on layer mouse out to disable live interaction (drawing/moving)
 	// when leaving the layer for more than x milliseconds
 	onMouseOut() {
@@ -222,7 +218,7 @@ class Layer extends Component {
 			this.disableInteraction, 700
 		)));
 	}
-	
+
 	// draw on layer
 	draw(clientX = this.state.clientX, clientY = this.state.clientY) {
 		const toX = clientX - this.state.offsetLeft;
@@ -233,7 +229,7 @@ class Layer extends Component {
 		ctx.lineTo(toX, toY + 0.1);
 		ctx.stroke();
 	}
-	
+
 	// move layer
 	move(clientX, clientY) {
 			// set the new layer's top/left position
@@ -247,7 +243,7 @@ class Layer extends Component {
 			}
 		});
 	}
-	
+
 	// print a given text on to this layer
 	onTextPrint(text, settings) {
 		const ctx = this.layer.getContext('2d');
@@ -255,28 +251,106 @@ class Layer extends Component {
 		ctx.fillStyle = settings.color;
 		ctx.fillText(text, settings.x, settings.y);
 	}
-	
-	shouldComponentUpdate(nextProps, nextState) {
-		if (this.props.settings.tool !== nextProps.settings.tool) {
-			this.disableInteraction();
-			return true;
+
+	doLayerOperation(operation) {
+		console.log(operation)
+		switch(operation.type) {
+			case LAYER_OPERATION_FILL: {
+				const ctx = this.layer.getContext('2d');
+				ctx.fillStyle = operation.color;
+				ctx.rect(0, 0, this.layer.width, this.layer.height);
+				ctx.globalCompositeOperation = 'source-over';
+				ctx.fill();
+			} break;
+
+			case LAYER_OPERATION_CLEAR: {
+				const ctx = this.layer.getContext('2d');
+				ctx.fillStyle = 'rgba(0,0,0,1)';
+				ctx.rect(0, 0, this.layer.width, this.layer.height);
+				ctx.globalCompositeOperation = 'destination-out';
+				ctx.fill();
+			} break;
+
+			case LAYER_OPERATION_COLORTOTRANSPARENT: {
+				const ctx = this.layer.getContext('2d');
+				const imgData = ctx.getImageData(0, 0, this.layer.width, this.layer.height);
+				const px = imgData.data;
+				const rgb = operation.color.split(',');
+				rgb[0] = rgb[0].replace( /\D/g, '' );	// get numbers only
+				rgb[1] = rgb[1].replace( /\D/g, '' );
+				rgb[2] = rgb[2].replace( /\D/g, '' );
+				for (let i = 0, len = px.length; i < len; i+=4) {
+						// if the color is in tolerance
+					if (Math.abs(px[i] - rgb[0]) + Math.abs(px[i+1] - rgb[1]) + Math.abs(px[i+2] - rgb[2]) <= 30) {
+							// set the alpha channel for this pixel to 0 (transparent)
+						px[i+3] = 0;
+					}
+				}
+				ctx.putImageData(imgData, 0, 0);
+			} break;
+
+			case LAYER_OPERATION_IMAGEDATA:
+			case LAYER_OPERATION_CROP:
+			case LAYER_OPERATION_UNDO: {
+				const ctx = this.layer.getContext('2d');
+				switch(operation.type) {
+					case LAYER_OPERATION_CROP:
+						operation.imageData = ctx.getImageData(...operation.cropData);
+					case LAYER_OPERATION_UNDO:
+						this.props.dispatch(resizeLayer(this.props.layerID, {
+							width: operation.imageData.width,
+							height: operation.imageData.height
+						}))
+					default: break;
+				}
+				//////// crop action zesummen mam layer dimension set
+				/////// genausou bei beim undo den layer dimension set maachen
+				/// domat alles da reih no geet
+				ctx.putImageData(operation.imageData, 0, 0);
+			} break;
+
+			case LAYER_OPERATION_IMAGE:
+				this.layer.getContext('2d').drawImage(
+					operation.image,
+					((this.layer.width/2) - (operation.image.width/2)),
+					((this.layer.height/2) - (operation.image.height/2)),
+					operation.image.width,
+					operation.image.height
+				);
+				break;
+
+			default: break;
 		}
-		if (this.props.isSelected !== nextProps.isSelected
-			|| this.props.isVisible !== nextProps.isVisible
-				|| this.props.width !== nextProps.width
-					|| this.props.height !== nextProps.height
-						|| this.state.left !== nextState.left
-							|| this.state.top !== nextState.top
-								|| this.state.showTextbox !== nextState.showTextbox
-									|| this.state.toolClickX !== nextState.toolClickX
-										|| this.state.toolClickY !== nextState.toolClickY)
+
+		this.props.dispatch(layerOperationDone());
+	}
+
+	shouldComponentUpdate(nextProps, nextState) {
+		if (this.props.settings.tool !== nextProps.settings.tool
+			|| this.props.isSelected !== nextProps.isSelected
+				|| this.props.isVisible !== nextProps.isVisible
+					|| this.props.width !== nextProps.width
+						|| this.props.height !== nextProps.height
+							|| this.state.left !== nextState.left
+								|| this.state.top !== nextState.top
+									|| this.state.showTextbox !== nextState.showTextbox
+										|| this.state.toolClickX !== nextState.toolClickX
+											|| this.state.toolClickY !== nextState.toolClickY
+												|| (nextProps.layerOperation && nextProps.layerOperation.id === nextProps.layerID))
 			return true;
 		return false;
 	}
-	
+
+	componentWillUpdate(nextProps) {
+		if (this.props.settings.tool !== nextProps.settings.tool)
+			this.disableInteraction();
+		else if (nextProps.layerOperation && nextProps.layerOperation.id === nextProps.layerID)
+			this.doLayerOperation(nextProps.layerOperation);
+	}
+
 	render() {
 		return (
-			<div 
+			<div
 				className={'Layer' + (this.props.isSelected ? ' selected' : '')}
 				style={{
 					display: (this.props.isVisible) ? 'block' : 'none',
@@ -287,8 +361,8 @@ class Layer extends Component {
 				}}
 			>
 				<canvas
-					id={this.props.layerIdPrefix + this.props.layerID}
 					key={this.props.layerID}
+					id={this.props.layerIdPrefix + this.props.layerID}
 					className="canvas"
 					ref={canvas => this.layer = canvas}
 					width={this.props.width}
@@ -321,9 +395,10 @@ class Layer extends Component {
 
 export default connect(
 	state => ({
-		live: state.live,														// the live interaction params
+		live: state.live,																	// the live interaction params
+		layerOperation: state.layers.layerOperation,			// an operation to execute on a specific layer
 		nextLayerContent: state.layers.nextLayerContent,	// the next layer params
 		layerIdPrefix: state.layers.idPrefix,							// the layer id prefix
-		settings: state.settings											// the settings
+		settings: state.settings													// the settings
 	})
 )(Layer);

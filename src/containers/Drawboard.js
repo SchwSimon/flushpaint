@@ -1,29 +1,35 @@
 import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
-
 import Layer from '../components/Layer';
+import { addLayer } from '../actions/index';
 
 import '../styles/Drawboard.css';
 
 /**
  * Main container which contains all the canvas layers
  */
-class Drawboard extends PureComponent {
+export class Drawboard extends PureComponent {
+	componentDidMount() {
+			// add one layer to start
+		this.props.dispatch(addLayer({
+			width: 600,
+			height: 400
+		}));
+	}
+
 	render() {
 		return (
 			<div id="Drawboard">
-				{this.props.layers.map((layer, index) => {
-					return (
-						<Layer
-							key={layer.id}
-							layerID={layer.id}
-							isVisible={layer.isVisible}
-							isSelected={layer.id === this.props.selectedLayerID}
-							width={layer.width}
-							height={layer.height}
-						/>
-					);
-				})}
+				{this.props.layers && this.props.layers.map(layer => (
+					<Layer
+						key={layer.id}
+						layerID={layer.id}
+						isVisible={layer.isVisible}
+						isSelected={layer.id === this.props.selectedLayerID}
+						width={layer.width}
+						height={layer.height}
+					/>
+				))}
 			</div>
 		);
 	}
@@ -31,7 +37,7 @@ class Drawboard extends PureComponent {
 
 export default connect(
 	state => ({
-		layers: state.layers.layers,						// the layers array
+		layers: state.layers.layers,							// the layers array
 		selectedLayerID: state.layers.selectedID	// the selected layer id
 	})
 )(Drawboard);

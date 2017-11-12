@@ -96,18 +96,20 @@ export const ADD_LAYER = 'ADD_LAYER';
 export const SELECT_LAYER = 'SELECT_LAYER';
 export const TOGGLE_LAYER = 'TOGGLE_LAYER';
 export const SORT_LAYERORDER = 'SORT_LAYERORDER';
-export const FILL_LAYER = 'FILL_LAYER';
-export const CLEAR_LAYER = 'CLEAR_LAYER';
+export const LAYER_OPERATION_FILL = 'LAYER_OPERATION_FILL';
+export const LAYER_OPERATION_CLEAR = 'LAYER_OPERATION_CLEAR';
 export const REMOVE_LAYER = 'REMOVE_LAYER';
 export const MERGE_LAYERS = 'MERGE_LAYERS';
 export const SET_LAYERTITLE = 'SET_LAYERTITLE';
 export const SET_NEXTLAYERCONTENT = 'SET_NEXTLAYERCONTENT';
-export const SET_COLORTOTRANSPARENT = 'SET_COLORTOTRANSPARENT';
-export const RESIZE_LAYER = 'RESIZE_LAYER';
-export const PUT_LAYERIMAGEDATA = 'PUT_LAYERIMAGEDATA';
-export const DRAW_LAYERIMAGE = 'DRAW_LAYERIMAGE';
+export const LAYER_OPERATION_COLORTOTRANSPARENT = 'LAYER_OPERATION_COLORTOTRANSPARENT';
+export const LAYER_OPERATION_RESIZE = 'LAYER_OPERATION_RESIZE';
+export const LAYER_OPERATION_CROP = 'LAYER_OPERATION_CROP';
+export const LAYER_OPERATION_IMAGEDATA = 'LAYER_OPERATION_IMAGEDATA';
+export const LAYER_OPERATION_IMAGE = 'LAYER_OPERATION_IMAGE';
 export const PUSH_HISTORY = 'PUSH_HISTORY';
-export const UNDO_HISTORY = 'UNDO_HISTORY';
+export const LAYER_OPERATION_UNDO = 'LAYER_OPERATION_UNDO';
+export const LAYER_OPERATION_DONE = 'LAYER_OPERATION_DONE';
 
 export function addLayer(dimensions) {
 	return { type: ADD_LAYER, dimensions };
@@ -122,10 +124,10 @@ export function sortLayersOrder(oldIndex, newIndex) {
 	return { type: SORT_LAYERORDER, oldIndex, newIndex };
 }
 export function fillLayer(layerID, color) {
-	return { type: FILL_LAYER, layerID, color };
+	return { type: LAYER_OPERATION_FILL, layerID, color };
 }
 export function clearLayer(layerID) {
-	return { type: CLEAR_LAYER, layerID };
+	return { type: LAYER_OPERATION_CLEAR, layerID };
 }
 export function removeLayer(layerID) {
 	return { type: REMOVE_LAYER, layerID };
@@ -140,20 +142,28 @@ export function setNextLayerContent(content) {
 	return { type: SET_NEXTLAYERCONTENT, content }
 }
 export function setColorToTransparent(layerID, color) {
-	return { type: SET_COLORTOTRANSPARENT, layerID, color }
+	return { type: LAYER_OPERATION_COLORTOTRANSPARENT, layerID, color }
 }
 export function resizeLayer(layerID, dimensions) {
-	return { type: RESIZE_LAYER, layerID, dimensions }
+	return { type: LAYER_OPERATION_RESIZE, layerID, dimensions }
 }
+export const cropLayer = (layerID, cropData) => ({
+	type: LAYER_OPERATION_CROP,
+	layerID,
+	cropData
+})
 export function putLayerImageData(layerID, imageData) {
-	return { type: PUT_LAYERIMAGEDATA, layerID, imageData }
+	return { type: LAYER_OPERATION_IMAGEDATA, layerID, imageData }
 }
 export function drawLayerImage(layerID, image) {
-	return { type: DRAW_LAYERIMAGE, layerID, image }
+	return { type: LAYER_OPERATION_IMAGE, layerID, image }
 }
 export function pushHistory(layerID) {
 	return { type: PUSH_HISTORY, layerID };
 }
 export function undoHistory() {
-	return { type: UNDO_HISTORY };
+	return { type: LAYER_OPERATION_UNDO };
 }
+export const layerOperationDone = () => ({
+	type: LAYER_OPERATION_DONE
+})

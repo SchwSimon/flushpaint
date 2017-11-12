@@ -3,7 +3,7 @@ import {
 	TOGGLE_DRAWING,
 	TOGGLE_MOVING,
 	SET_INTERACTIONTIMEOUT
-} from '../actions/live';
+} from '../actions/index';
 
 export function live(state = initialState.live, action) {
 	switch(action.type) {

@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
-import { pushHistory,	cropLayer } from '../actions/index';
+import { cropLayer } from '../actions/index';
 
 import '../styles/Tool-Crop.css';
 
@@ -76,13 +76,12 @@ class Crop extends PureComponent {
 	}
 
 	onCrop() {
-		this.props.dispatch(pushHistory(this.props.layerID));
-		this.props.dispatch(cropLayer(this.props.layerID, [
-			this.state.left,
-			this.state.top,
-			this.state.width,
-			this.state.height
-		]));
+		this.props.dispatch(cropLayer(this.props.layerID, {
+			left: this.state.left,
+			top: this.state.top,
+			width: this.state.width,
+			height: this.state.height,
+		}));
 	}
 
 	render() {

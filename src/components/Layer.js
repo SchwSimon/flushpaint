@@ -3,12 +3,12 @@ import { connect } from 'react-redux';
 import TextBox from '../components/Tool-TextBox';
 import Crop from '../components/Tool-Crop';
 import { toggleDrawing, toggleMoving, setInteractionTimeout,
- pushHistory, resizeLayer, ToolList, GlobalCompositeOperations,
- setStrokeStyle, selectLayer, fillLayer, layerContentTypes,
- setNextLayerContent, layerOperationDone,
+ pushHistory, resizeLayer, ToolList, GlobalCompositeOperations, removeLayer,
+ setStrokeStyle, selectLayer, fillLayer, layerOperationDone, putLayerImageData,
  LAYER_OPERATION_FILL, LAYER_OPERATION_CLEAR, LAYER_OPERATION_COLORTOTRANSPARENT,
  LAYER_OPERATION_IMAGEDATA, LAYER_OPERATION_IMAGE, LAYER_OPERATION_UNDO,
- LAYER_OPERATION_RESIZE, LAYER_OPERATION_CROP } from '../actions/index';
+ LAYER_OPERATION_RESIZE, LAYER_OPERATION_CROP, LAYER_OPERATION_CLONE,
+ LAYER_OPERATION_MERGE } from '../actions/index';
 
 import '../styles/Layer.css';
 
@@ -32,61 +32,6 @@ class Layer extends Component {
 	componentDidMount() {
 		if (!this.props.layerOperation || this.props.layerOperation.id !== this.props.layerID) return;
 		this.doLayerOperation(this.props.layerOperation);
-			// center this layer
-		this.centerLayer();
-		return;
-		//////////////////////////////////
-			// set the new layer's default content
-		switch(this.props.nextLayerContent.type) {
-
-				// make this layer a clone of the given source layer
-			case layerContentTypes.CLONE:
-					// get the clone layer source
-				const cloneSourceLayer = document.getElementById(this.props.layerIdPrefix + this.props.nextLayerContent.data);
-
-					// resize this layer to the clone source dimensions
-				this.props.dispatch(resizeLayer(this.props.layerID, {
-					width: cloneSourceLayer.width,
-					height: cloneSourceLayer.height
-				}));
-
-					// make async otherwise data will be lost..
-				return setTimeout(() => {
-						// put the clone source image data to this layer
-					this.layer.getContext('2d').putImageData(
-						cloneSourceLayer.getContext('2d').getImageData(0, 0, cloneSourceLayer.width, cloneSourceLayer.height),
-						0, 0
-					);
-						// set the next layer's content back to default
-					this.props.dispatch(setNextLayerContent());
-						// center this layer
-					this.centerLayer();
-				}, 1);
-
-				// draw the given image on to this layer
-			case layerContentTypes.IMAGE:
-				this.layer.getContext('2d').drawImage(
-					this.props.nextLayerContent.data,
-					0, 0,
-					this.layer.width,
-					this.layer.height
-				);
-				break;
-
-				// put the given image data on to this layer
-			case layerContentTypes.IMAGEDATA:
-				this.layer.getContext('2d').putImageData(
-					this.props.nextLayerContent.data,
-					0, 0
-				);
-				break;
-
-				// fill this layer with the given color, this is also the default behaviour
-			case layerContentTypes.FILLCOLOR:
-			default: this.props.dispatch(fillLayer(this.props.layerID, this.props.nextLayerContent.data));
-		}
-			// set the next layer's content back to default
-		this.props.dispatch(setNextLayerContent());
 			// center this layer
 		this.centerLayer();
 	}
@@ -180,7 +125,7 @@ class Layer extends Component {
 			// clear the mouse out timeout
 		clearTimeout(this.props.live.interactionTimeout);
 			// push history
-		this.props.dispatch(pushHistory(this.props.layerID));
+    this.pushHistory();
 			// set the layer's (canvas) context props
 		const ctx = this.layer.getContext('2d');
 		ctx.lineCap = this.props.settings.lineCap;
@@ -234,44 +179,63 @@ class Layer extends Component {
 	move(clientX, clientY) {
 			// set the new layer's top/left position
 			// set the new cursor's x/y position
-		this.setState((prevState) => {
-			return {
-				left: prevState.left + (clientX - prevState.clientX),
-				top: prevState.top + (clientY - prevState.clientY),
-				clientX: clientX,
-				clientY: clientY
-			}
-		});
+		this.setState(prevState => ({
+			left: prevState.left + (clientX - prevState.clientX),
+			top: prevState.top + (clientY - prevState.clientY),
+			clientX: clientX,
+			clientY: clientY
+		}));
 	}
 
 	// print a given text on to this layer
 	onTextPrint(text, settings) {
+    this.pushHistory();
 		const ctx = this.layer.getContext('2d');
 		ctx.font = settings.size + 'px arial';
 		ctx.fillStyle = settings.color;
 		ctx.fillText(text, settings.x, settings.y);
 	}
 
+  pushHistory() {
+    this.props.dispatch(pushHistory(
+      this.props.layerID,
+      this.layer.getContext('2d').getImageData(
+				0, 0,
+				this.layer.width,
+				this.layer.height
+			)
+    ));
+  }
+
 	doLayerOperation(operation) {
-		console.log(operation)
+    const allowHistoryPush = !operation.preventHistoryPush;
+
 		switch(operation.type) {
 			case LAYER_OPERATION_FILL: {
+        if (allowHistoryPush)
+          this.pushHistory();
 				const ctx = this.layer.getContext('2d');
 				ctx.fillStyle = operation.color;
 				ctx.rect(0, 0, this.layer.width, this.layer.height);
-				ctx.globalCompositeOperation = 'source-over';
+				ctx.globalCompositeOperation = GlobalCompositeOperations.SOURCE_OVER;
 				ctx.fill();
-			} break;
+        break;
+			}
 
 			case LAYER_OPERATION_CLEAR: {
+        if (allowHistoryPush)
+          this.pushHistory();
 				const ctx = this.layer.getContext('2d');
 				ctx.fillStyle = 'rgba(0,0,0,1)';
 				ctx.rect(0, 0, this.layer.width, this.layer.height);
-				ctx.globalCompositeOperation = 'destination-out';
+				ctx.globalCompositeOperation = GlobalCompositeOperations.DESTINATION_OUT;
 				ctx.fill();
-			} break;
+        break;
+			}
 
 			case LAYER_OPERATION_COLORTOTRANSPARENT: {
+        if (allowHistoryPush)
+          this.pushHistory();
 				const ctx = this.layer.getContext('2d');
 				const imgData = ctx.getImageData(0, 0, this.layer.width, this.layer.height);
 				const px = imgData.data;
@@ -287,37 +251,90 @@ class Layer extends Component {
 					}
 				}
 				ctx.putImageData(imgData, 0, 0);
-			} break;
+        break;
+			}
 
 			case LAYER_OPERATION_IMAGEDATA:
-			case LAYER_OPERATION_CROP:
-			case LAYER_OPERATION_UNDO: {
-				const ctx = this.layer.getContext('2d');
-				switch(operation.type) {
-					case LAYER_OPERATION_CROP:
-						operation.imageData = ctx.getImageData(...operation.cropData);
-					case LAYER_OPERATION_UNDO:
-						this.props.dispatch(resizeLayer(this.props.layerID, {
-							width: operation.imageData.width,
-							height: operation.imageData.height
-						}))
-					default: break;
-				}
-				//////// crop action zesummen mam layer dimension set
-				/////// genausou bei beim undo den layer dimension set maachen
-				/// domat alles da reih no geet
-				ctx.putImageData(operation.imageData, 0, 0);
-			} break;
+        if (this.layer.width !== operation.imageData.width
+            || this.layer.height !== operation.imageData.height)
+          return setTimeout(() => {this.doLayerOperation(operation)}, 1);
+        if (allowHistoryPush)
+          this.pushHistory();
+        this.layer.getContext('2d').putImageData(operation.imageData, 0, 0);
+        break;
 
-			case LAYER_OPERATION_IMAGE:
-				this.layer.getContext('2d').drawImage(
+			case LAYER_OPERATION_IMAGE: {
+        if (allowHistoryPush)
+          this.pushHistory();
+        if (!operation.opts)
+          operation.opts = [
+            (this.layer.width/2) - (operation.image.width/2),
+            (this.layer.height/2) - (operation.image.height/2),
+            operation.image.width,
+  					operation.image.height
+          ];
+        const ctx = this.layer.getContext('2d');
+        ctx.globalCompositeOperation = GlobalCompositeOperations.SOURCE_OVER;
+				ctx.drawImage(
 					operation.image,
-					((this.layer.width/2) - (operation.image.width/2)),
-					((this.layer.height/2) - (operation.image.height/2)),
-					operation.image.width,
-					operation.image.height
+					...operation.opts
 				);
 				break;
+      }
+
+      case LAYER_OPERATION_CROP: {
+        if (allowHistoryPush)
+          this.pushHistory();
+        const imageData = this.layer.getContext('2d').getImageData(
+          operation.cropData.left,
+          operation.cropData.top,
+          operation.cropData.width,
+          operation.cropData.height
+        );
+        this.props.dispatch(resizeLayer(this.props.layerID, {
+          width: operation.cropData.width,
+          height: operation.cropData.height
+        }));
+        return this.doLayerOperation({
+          type: LAYER_OPERATION_IMAGEDATA,
+          imageData: imageData,
+          preventHistoryPush: true
+        });
+      }
+
+      case LAYER_OPERATION_CLONE:
+        return this.doLayerOperation({
+          type: LAYER_OPERATION_IMAGEDATA,
+          imageData: document.getElementById(this.props.layerIdPrefix + operation.targetID)
+            .getContext('2d').getImageData(0, 0, this.layer.width, this.layer.height),
+          preventHistoryPush: true
+        });
+
+      case LAYER_OPERATION_MERGE: {
+        const targetLayer = document.getElementById(this.props.layerIdPrefix + operation.targetID);
+        const targetLayerRect = targetLayer.getBoundingClientRect();
+  			const thisLayerRect = this.layer.getBoundingClientRect();
+        this.doLayerOperation({
+          type: LAYER_OPERATION_IMAGE,
+          image: targetLayer,
+          opts: [
+            -(thisLayerRect.x - targetLayerRect.x),
+            -(thisLayerRect.y - targetLayerRect.y)
+          ]
+        })
+        return this.props.dispatch(removeLayer(operation.targetID));
+      }
+
+      case LAYER_OPERATION_UNDO:
+        this.props.dispatch(resizeLayer(this.props.layerID, {
+          width: operation.imageData.width,
+          height: operation.imageData.height
+        }));
+        return this.doLayerOperation({
+          type: LAYER_OPERATION_IMAGEDATA,
+          imageData: operation.imageData,
+          preventHistoryPush: true
+        });
 
 			default: break;
 		}

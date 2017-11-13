@@ -4,7 +4,6 @@ import { connect } from 'react-redux';
 import LayerDisplay from './LayerDisplay';
 
 import {
-	pushHistory,
 	addLayer,
 	fillLayer,
 	clearLayer,
@@ -12,8 +11,9 @@ import {
 	removeLayer,
 	drawLayerImage,
 	setColorToTransparent,
-	setNextLayerContent,
-	layerContentTypes
+	layerContentTypes,
+	cloneLayer,
+	LAYER_OPERATION_IMAGE
 } from '../actions/index';
 
 import '../styles/LayerHandler.css';
@@ -65,16 +65,15 @@ class LayerHandler extends PureComponent {
 	// add a new layer with the given input image
 	addImageLayer(event) {
 		const self = this;
-		loadImageFromFile(event.target.files[0], (image) => {
-				// set the next layer content params
-			self.props.dispatch(setNextLayerContent({
-				type: layerContentTypes.IMAGE,
-				data: image
-			}));
-				// add a new layer
+		loadImageFromFile(event.target.files[0], image => {
+				// add a new layer with the given layer operatoin
 			self.props.dispatch(addLayer({
 				width: image.width,
 				height: image.height
+			}, {
+				type: LAYER_OPERATION_IMAGE,
+				image: image,
+				preventHistoryPush: true
 			}));
 		});
 	}
@@ -83,10 +82,8 @@ class LayerHandler extends PureComponent {
 	insertImage(event) {
 			// do nothing if no layer is selected
 		if (!this.props.selectedLayerID) return;
-			// push history
-		this.props.dispatch(pushHistory(this.props.selectedLayerID));
 			// load & draw image on to the selected layer
-		loadImageFromFile(event.target.files[0], (image) => {
+		loadImageFromFile(event.target.files[0], image => {
 			this.props.dispatch(drawLayerImage(
 				this.props.selectedLayerID,
 				image
@@ -96,15 +93,11 @@ class LayerHandler extends PureComponent {
 
 	// fill the selected layer with the currently selected color
 	fillLayer() {
-			// push history
-		this.props.dispatch(pushHistory(this.props.selectedLayerID));
 		this.props.dispatch(fillLayer(this.props.selectedLayerID, this.props.selectedColor));
 	}
 
 	// make the selected layer fully transparent
 	clearLayer() {
-			// push history
-		this.props.dispatch(pushHistory(this.props.selectedLayerID));
 		this.props.dispatch(clearLayer(this.props.selectedLayerID));
 	}
 
@@ -115,8 +108,6 @@ class LayerHandler extends PureComponent {
 
 	// turn the selected color with a tolerance to transparent on the selected layer
 	colorToTransparent() {
-			// push history
-		this.props.dispatch(pushHistory(this.props.selectedLayerID));
 		this.props.dispatch(setColorToTransparent(this.props.selectedLayerID, this.props.selectedColor));
 	}
 
@@ -125,28 +116,15 @@ class LayerHandler extends PureComponent {
 			// return is no layer is selected
 		if (!this.props.selectedLayerID) return;
 			// set the next layer content params
-		this.props.dispatch(setNextLayerContent({
-			type: layerContentTypes.CLONE,
-			data: this.props.selectedLayerID
-		}));
-			// set any dimensions, clone will resize to the right dimensions
-		this.props.dispatch(addLayer({width:1,height:1}));
+		this.props.dispatch(cloneLayer(this.props.selectedLayerID));
 	}
 
 	// merge the selected layer with the next lower layer
 	merge() {
 			// return if no layer is selected
 		if (!this.props.selectedLayerID) return;
-			// get the ordered array index of the selected layer
-		const nextLayerId = this.props.layers.findIndex(layer => layer.id === this.props.selectedLayerID) - 1;
-			// return if there is no next layer
-		if (!this.props.layers[nextLayerId]) return;
-			// push only the destination layer's history
-		this.props.dispatch(pushHistory(this.props.layers[nextLayerId].id));
-			// dispatch the layer merging
-		this.props.dispatch(mergeLayers(this.props.selectedLayerID, this.props.layers[nextLayerId].id));
-			// remove the selected layer (merge source)
-		this.props.dispatch(removeLayer(this.props.selectedLayerID));
+			// merge this layer onto the next (sub) layer
+		this.props.dispatch(mergeLayers(this.props.selectedLayerID));
 	}
 
 	render() {

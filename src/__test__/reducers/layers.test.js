@@ -1,20 +1,17 @@
 import layers, { layersInitialState } from '../../reducers/layers';
+import { ADD_LAYER, REMOVE_LAYER, SELECT_LAYER, TOGGLE_LAYER, SORT_LAYERS,
+ LAYER_PUSH_HISTORY, LAYER_SET_TITLE, LAYER_OPERATION_FILL, LAYER_OPERATION_CLEAR,
+ LAYER_OPERATION_MERGE, LAYER_OPERATION_COLORTOTRANSPARENT, LAYER_OPERATION_RESIZE,
+ LAYER_OPERATION_CROP, LAYER_OPERATION_IMAGEDATA, LAYER_OPERATION_IMAGE,
+ LAYER_OPERATION_CLONE, LAYER_OPERATION_UNDO, LAYER_OPERATION_DONE } from '../../actions/index';
 import layerIdHandler from '../../reducers/layers/layerIdHandler';
 import generateLayerStructure, { LAYER_ID_PREFIX } from '../../reducers/layers/generateLayerStructure';
-import { ADD_LAYER, SELECT_LAYER, TOGGLE_LAYER, SORT_LAYERORDER, LAYER_OPERATION_FILL,
- LAYER_OPERATION_CLEAR, REMOVE_LAYER, MERGE_LAYERS, SET_LAYERTITLE, SET_NEXTLAYERCONTENT,
- LAYER_OPERATION_COLORTOTRANSPARENT, LAYER_OPERATION_RESIZE, LAYER_OPERATION_IMAGEDATA, LAYER_OPERATION_IMAGE,
- LAYER_OPERATION_CROP, PUSH_HISTORY, LAYER_OPERATION_UNDO, LAYER_OPERATION_DONE, layerContentTypes } from '../../actions/index';
 import { arrayMove } from 'react-sortable-hoc';
 
 describe('reducer: layers', () => {
   const defaultState = {
     selectedID: null,
     idPrefix: LAYER_ID_PREFIX,
-    nextLayerContent: {
-      type: layerContentTypes.FILLCOLOR,
-      data: 'white'
-    },
     layers: [],
     layerOperation: null,
     history: [],
@@ -52,6 +49,23 @@ describe('reducer: layers', () => {
   		expect(layers(state, action).layers).toEqual(
         defaultState.layers.concat([generateLayerStructure(nextLayerId, 300, 300)])
       );
+    });
+
+    it('must set the default layerOperation', () => {
+  		expect(layers(state, action).layerOperation).toEqual({
+        id: layerIdHandler.current(),
+        type: LAYER_OPERATION_FILL,
+        color: 'white',
+        preventHistoryPush: true
+      });
+    });
+
+    it('must set the given layerOperation and add the current layer id to it', () => {
+      action.layerOperation = {someProp: 1};
+  		expect(layers(state, action).layerOperation).toEqual({
+        id: layerIdHandler.current(),
+        someProp: 1
+      });
     });
   });
 
@@ -137,53 +151,78 @@ describe('reducer: layers', () => {
     });
   });
 
-  describe('SORT_LAYERORDER', () => {
+  describe('SORT_LAYERS', () => {
     it('must swap array element by the given indexes', () => {
       const action = {
-        type: SORT_LAYERORDER,
+        type: SORT_LAYERS,
         oldIndex: 0,
         newIndex: 2
       };
       const state = {
         layers: ['index_0','index_1','index_2']
       };
+
   		expect(layers(state, action).layers).toEqual(
         arrayMove(state.layers, action.oldIndex, action.newIndex)
       );
     });
   });
 
-  describe('LAYER_OPERATION_RESIZE', () => {
+  describe('LAYER_PUSH_HISTORY', () => {
     const action = {
-      type: LAYER_OPERATION_RESIZE,
+      type: LAYER_PUSH_HISTORY,
       layerID: 1,
-      dimensions: {
-        width: 100,
-        height: 200
-      }
-    };
-    const state = {
-      layers: [{
-        id: 1,
-        width: 500,
-        height: 500
-      }]
+      imageData: 'image data'
     };
 
-    it('must set the layer\' dimensions', () => {
-      expect(layers(state, action).layers[0]).toEqual({
-        id: 1,
-        width: 100,
-        height: 200
-      });
+    it('must add a new history element', () => {
+      const state = {
+        history: []
+      };
+
+  		expect(layers(state, action).history).toEqual([{
+        layerID: action.layerID,
+        imageData: action.imageData
+      }]);
     });
 
-    it('must force layerID to type number', () => {
-      action.layerID = '1';
-      expect(layers(state, action).layers[0]).toEqual({
+    it('must remove the first history element if max history is reached', () => {
+      const state = {
+        history: [{},{}],
+        maxHistory: 2
+      };
+  		expect(layers(state, action).history).toEqual([{}, {
+        layerID: action.layerID,
+        imageData: action.imageData
+      }]);
+    });
+  });
+
+  describe('Layer information setter', () => {
+    describe('LAYER_SET_TITLE', () => {
+      const layerRetitled = {
         id: 1,
-        width: 100,
-        height: 200
+        title: 'title'
+      };
+      const state = {
+        layers: [{
+          id: 1,
+          title: 'not set'
+        }]
+      };
+      const action = {
+        type: LAYER_SET_TITLE,
+        layerID: 1,
+        title: 'title'
+      };
+
+      it('must set the layer\'s title', () => {
+        expect(layers(state, action).layers[0]).toEqual(layerRetitled);
+      });
+
+      it('must force layerID to type number', () => {
+        action.layerID = '1';
+        expect(layers(state, action).layers[0]).toEqual(layerRetitled);
       });
     });
   });
@@ -277,15 +316,118 @@ describe('reducer: layers', () => {
     });
 
     describe('LAYER_OPERATION_CROP', () => {
-      it('must set the right layer operation', () => {
+      beforeEach(() => {
         action.type = LAYER_OPERATION_CROP;
-        action.cropData = 'crop data'
-        expect(layers(state, action)).toEqual({
-          layerOperation: {
-            id: 1,
-            type: LAYER_OPERATION_CROP,
-            cropData: 'crop data'
-          }
+        action.cropData = {
+          width: 50,
+          height: 50
+        };
+      })
+
+      it('must set the right layer operation', () => {
+        expect(layers(state, action).layerOperation).toEqual({
+          id: 1,
+          type: LAYER_OPERATION_CROP,
+          cropData: action.cropData
+        });
+      });
+    });
+
+    describe('LAYER_OPERATION_RESIZE', () => {
+      beforeEach(() => {
+        action.type = LAYER_OPERATION_RESIZE;
+        action.dimensions = {
+          width: 100,
+          height: 200
+        };
+        state.layers = [{
+          id: 1,
+          width: 500,
+          height: 500
+        }];
+      });
+      const layerResized = {
+        id: 1,
+        width: 100,
+        height: 200
+      };
+
+      it('must set the layer\'s dimensions', () => {
+        expect(layers(state, action).layers[0]).toEqual(layerResized);
+      });
+
+      it('must force layerID to type number', () => {
+        action.layerID = '1';
+        expect(layers(state, action).layers[0]).toEqual(layerResized);
+      });
+    });
+
+    describe('LAYER_OPERATION_MERGE', () => {
+      const targetID = 1;
+      beforeEach(() => {
+        action.type = LAYER_OPERATION_MERGE;
+        action.layerID = 2;
+        state.layers = [
+          {id: targetID},
+          {id:2}
+        ];
+        state.selectedID = 2;
+      });
+
+      it('must set the selected id to the target layer\'s id', () => {
+        expect(layers(state, action).selectedID).toEqual(targetID);
+      });
+
+      it('must force layerID to type number', () => {
+        action.layerID = '2';
+        expect(layers(state, action).selectedID).toEqual(targetID);
+      });
+
+      it('must set the right layer operation', () => {
+        expect(layers(state, action).layerOperation).toEqual({
+          id: targetID,
+          type: LAYER_OPERATION_MERGE,
+          targetID: action.layerID
+        });
+      });
+    });
+
+    describe('LAYER_OPERATION_CLONE', () => {
+      const cloneTarget = {
+        id: 1,
+        title: 'title'
+      };
+      beforeEach(() => {
+        action.type = LAYER_OPERATION_CLONE;
+        state.layers = [cloneTarget];
+        state.selectedID = null;
+      });
+
+      it('must set the selected id to the clone\'s id', () => {
+        expect(layers(state, action).selectedID).toEqual(layerIdHandler.current());
+      });
+
+      it('must create a copy op the target layer except the id and title', () => {
+        expect(layers(state, action).layers).toEqual([cloneTarget, {
+          id: layerIdHandler.current(),
+          title: cloneTarget.title + ' (copy)'
+        }]);
+      });
+
+      it('must force layerID to type number', () => {
+        action.layerID = '1';
+        expect(layers(state, action).layers).toEqual([cloneTarget, {
+          id: layerIdHandler.current(),
+          title: cloneTarget.title + ' (copy)'
+        }]);
+      });
+
+      it('must set the correct layerOperation', () => {
+        state.layerOperation = null;
+        expect(layers(state, action).layerOperation).toEqual({
+          id: layerIdHandler.current(),
+          type: LAYER_OPERATION_CLONE,
+          targetID: cloneTarget.id
         });
       });
     });
@@ -295,7 +437,7 @@ describe('reducer: layers', () => {
         action.type = LAYER_OPERATION_UNDO;
         state.history = [{},{},{
           layerID: 1,
-          data: 'image data'
+          imageData: 'image data'
         }];
       });
 

@@ -65,12 +65,6 @@ export const ToolList = {
 	MOVE: 'MOVE',
 	TEXT: 'TEXT'
 };
-export const layerContentTypes = {
-	IMAGE: 'image',
-	IMAGEDATA: 'image-data',
-	CLONE: 'clone',
-	FILLCOLOR: 'fillcolor'
-}
 
 export function setStrokeStyle(style) {
 	return { type: SET_STROKESTYLE, style };
@@ -93,77 +87,101 @@ export function setTool(tool) {
  *		LAYERS
  */
 export const ADD_LAYER = 'ADD_LAYER';
+export const REMOVE_LAYER = 'REMOVE_LAYER';
 export const SELECT_LAYER = 'SELECT_LAYER';
 export const TOGGLE_LAYER = 'TOGGLE_LAYER';
-export const SORT_LAYERORDER = 'SORT_LAYERORDER';
+export const SORT_LAYERS = 'SORT_LAYERS';
+export const LAYER_PUSH_HISTORY = 'LAYER_PUSH_HISTORY';
+export const LAYER_SET_TITLE = 'LAYER_SET_TITLE';
 export const LAYER_OPERATION_FILL = 'LAYER_OPERATION_FILL';
 export const LAYER_OPERATION_CLEAR = 'LAYER_OPERATION_CLEAR';
-export const REMOVE_LAYER = 'REMOVE_LAYER';
-export const MERGE_LAYERS = 'MERGE_LAYERS';
-export const SET_LAYERTITLE = 'SET_LAYERTITLE';
-export const SET_NEXTLAYERCONTENT = 'SET_NEXTLAYERCONTENT';
+export const LAYER_OPERATION_MERGE = 'LAYER_OPERATION_MERGE';
 export const LAYER_OPERATION_COLORTOTRANSPARENT = 'LAYER_OPERATION_COLORTOTRANSPARENT';
 export const LAYER_OPERATION_RESIZE = 'LAYER_OPERATION_RESIZE';
 export const LAYER_OPERATION_CROP = 'LAYER_OPERATION_CROP';
 export const LAYER_OPERATION_IMAGEDATA = 'LAYER_OPERATION_IMAGEDATA';
 export const LAYER_OPERATION_IMAGE = 'LAYER_OPERATION_IMAGE';
-export const PUSH_HISTORY = 'PUSH_HISTORY';
+export const LAYER_OPERATION_CLONE = 'LAYER_OPERATION_CLONE';
 export const LAYER_OPERATION_UNDO = 'LAYER_OPERATION_UNDO';
 export const LAYER_OPERATION_DONE = 'LAYER_OPERATION_DONE';
 
-export function addLayer(dimensions) {
-	return { type: ADD_LAYER, dimensions };
-}
-export function selectLayer(layerID) {
-	return { type: SELECT_LAYER, layerID };
-}
-export function toggleLayer(layerID) {
-	return { type: TOGGLE_LAYER, layerID };
-}
-export function sortLayersOrder(oldIndex, newIndex) {
-	return { type: SORT_LAYERORDER, oldIndex, newIndex };
-}
-export function fillLayer(layerID, color) {
-	return { type: LAYER_OPERATION_FILL, layerID, color };
-}
-export function clearLayer(layerID) {
-	return { type: LAYER_OPERATION_CLEAR, layerID };
-}
-export function removeLayer(layerID) {
-	return { type: REMOVE_LAYER, layerID };
-}
-export function mergeLayers(sourceLayerID, destLayerID) {
-	return { type: MERGE_LAYERS, sourceLayerID, destLayerID };
-}
-export function setLayerTitle(layerID, title) {
-	return { type: SET_LAYERTITLE, layerID, title }
-}
-export function setNextLayerContent(content) {
-	return { type: SET_NEXTLAYERCONTENT, content }
-}
-export function setColorToTransparent(layerID, color) {
-	return { type: LAYER_OPERATION_COLORTOTRANSPARENT, layerID, color }
-}
-export function resizeLayer(layerID, dimensions) {
-	return { type: LAYER_OPERATION_RESIZE, layerID, dimensions }
-}
+export const addLayer = (dimensions, layerOperation) => ({
+	type: ADD_LAYER,
+	dimensions,
+	layerOperation
+});
+export const cloneLayer = (layerID) => ({
+	type: LAYER_OPERATION_CLONE,
+	layerID
+})
+export const selectLayer = (layerID) => ({
+	type: SELECT_LAYER,
+	layerID
+});
+export const toggleLayer = (layerID) => ({
+	type: TOGGLE_LAYER,
+	layerID
+});
+export const sortLayers = (oldIndex, newIndex) => ({
+	type: SORT_LAYERS,
+	oldIndex,
+	newIndex
+});
+export const fillLayer = (layerID, color) => ({
+	type: LAYER_OPERATION_FILL,
+	layerID,
+	color
+});
+export const clearLayer = (layerID) => ({
+	type: LAYER_OPERATION_CLEAR,
+	layerID
+});
+export const removeLayer = (layerID) => ({
+	type: REMOVE_LAYER,
+	layerID
+});
+export const mergeLayers = (layerID) => ({
+	type: LAYER_OPERATION_MERGE,
+	layerID
+});
+export const setLayerTitle = (layerID, title) => ({
+	type: LAYER_SET_TITLE,
+	layerID,
+	title
+});
+export const setColorToTransparent = (layerID, color) => ({
+	type: LAYER_OPERATION_COLORTOTRANSPARENT,
+	layerID,
+	color
+});
+export const resizeLayer = (layerID, dimensions) => ({
+	type: LAYER_OPERATION_RESIZE,
+	layerID,
+	dimensions
+});
 export const cropLayer = (layerID, cropData) => ({
 	type: LAYER_OPERATION_CROP,
 	layerID,
 	cropData
 })
-export function putLayerImageData(layerID, imageData) {
-	return { type: LAYER_OPERATION_IMAGEDATA, layerID, imageData }
-}
-export function drawLayerImage(layerID, image) {
-	return { type: LAYER_OPERATION_IMAGE, layerID, image }
-}
-export function pushHistory(layerID) {
-	return { type: PUSH_HISTORY, layerID };
-}
-export function undoHistory() {
-	return { type: LAYER_OPERATION_UNDO };
-}
+export const putLayerImageData = (layerID, imageData) => ({
+	type: LAYER_OPERATION_IMAGEDATA,
+	layerID,
+	imageData
+});
+export const drawLayerImage = (layerID, image) => ({
+	type: LAYER_OPERATION_IMAGE,
+	layerID,
+	image
+});
+export const pushHistory = (layerID, imageData) => ({
+	type: LAYER_PUSH_HISTORY,
+	layerID,
+	imageData
+});
+export const undoHistory = () => ({
+	type: LAYER_OPERATION_UNDO
+});
 export const layerOperationDone = () => ({
 	type: LAYER_OPERATION_DONE
 })

@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
-import { selectLayer, toggleLayer, sortLayersOrder, setLayerTitle } from '../actions/index';
+import { selectLayer, toggleLayer, sortLayers, setLayerTitle } from '../actions/index';
 import { SortableContainer, SortableElement, SortableHandle } from 'react-sortable-hoc';
 
 import '../styles/LayerDisplay.css';
@@ -95,7 +95,10 @@ class LayerDisplay extends PureComponent {
 
 	// resort the layers order array
 	onSortEnd({oldIndex, newIndex}) {
-		this.props.dispatch(sortLayersOrder(oldIndex, newIndex));
+			// reindex because they are reversed
+		oldIndex = (this.props.layers.length-1) - oldIndex;
+		newIndex = (this.props.layers.length-1) - newIndex;
+		this.props.dispatch(sortLayers(oldIndex, newIndex));
 	}
 
 	// enable title editing

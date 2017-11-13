@@ -1,18 +1,15 @@
-import { arrayMove } from 'react-sortable-hoc';
-import { ADD_LAYER, SELECT_LAYER, TOGGLE_LAYER, SORT_LAYERORDER, LAYER_OPERATION_FILL,
- LAYER_OPERATION_CLEAR, REMOVE_LAYER, MERGE_LAYERS, SET_LAYERTITLE, SET_NEXTLAYERCONTENT,
- LAYER_OPERATION_COLORTOTRANSPARENT, LAYER_OPERATION_RESIZE, LAYER_OPERATION_IMAGEDATA, LAYER_OPERATION_IMAGE,
- PUSH_HISTORY, LAYER_OPERATION_UNDO, LAYER_OPERATION_DONE, layerContentTypes, LAYER_OPERATION_CROP } from '../actions/index';
+import { ADD_LAYER, REMOVE_LAYER, SELECT_LAYER, TOGGLE_LAYER, SORT_LAYERS,
+ LAYER_PUSH_HISTORY, LAYER_SET_TITLE, LAYER_OPERATION_FILL, LAYER_OPERATION_CLEAR,
+ LAYER_OPERATION_MERGE, LAYER_OPERATION_COLORTOTRANSPARENT, LAYER_OPERATION_RESIZE,
+ LAYER_OPERATION_CROP, LAYER_OPERATION_IMAGEDATA, LAYER_OPERATION_IMAGE,
+ LAYER_OPERATION_CLONE, LAYER_OPERATION_UNDO, LAYER_OPERATION_DONE } from '../actions/index';
 import layerIdHandler from './layers/layerIdHandler';
 import generateLayerStructure, { LAYER_ID_PREFIX } from './layers/generateLayerStructure';
+import { arrayMove } from 'react-sortable-hoc';
 
 export const layersInitialState = {
 	selectedID: null,
 	idPrefix: LAYER_ID_PREFIX,
-	nextLayerContent: {
-		type: layerContentTypes.FILLCOLOR,
-		data: 'white'
-	},
 	layers: [],
   layerOperation: null,
 	history: [],
@@ -23,6 +20,14 @@ const layers = (state = layersInitialState, action) => {
 	switch(action.type) {
 		case ADD_LAYER: {
 			const layerID = layerIdHandler.next();
+      const layerOperation = action.layerOperation || {
+        id: layerID,
+        type: LAYER_OPERATION_FILL,
+        color: 'white',
+        preventHistoryPush: true
+      };
+      if (action.layerOperation)
+        layerOperation.id = layerID;
 			return Object.assign({}, state, {
 				selectedID: layerID,
 				layers: state.layers.concat([
@@ -32,11 +37,7 @@ const layers = (state = layersInitialState, action) => {
 						action.dimensions.height
 					)
 				]),
-        layerOperation: {
-          id: layerID,
-          type: LAYER_OPERATION_FILL,
-          color: 'white'
-        }
+        layerOperation: layerOperation
 			});
 		}
 
@@ -68,9 +69,34 @@ const layers = (state = layersInitialState, action) => {
 			});
 		}
 
-		case SORT_LAYERORDER:
+		case SORT_LAYERS:
 			return Object.assign({}, state, {
         layers: arrayMove(state.layers, action.oldIndex, action.newIndex)
+			});
+
+    case LAYER_PUSH_HISTORY: {
+      if (!action.layerID) break;
+      const history = Object.assign([], state.history);
+      if (history.length >= state.maxHistory)
+         history.shift();
+      return Object.assign({}, state, {
+        history: history.concat([{
+          layerID: action.layerID*1,
+          imageData: action.imageData
+        }])
+      });
+    }
+
+		case LAYER_SET_TITLE:
+      action.layerID = action.layerID*1;
+			return Object.assign({}, state, {
+				layers: state.layers.map(layer => {
+					if (layer.id === action.layerID)
+            return Object.assign({}, layer, {
+              title: action.title
+            });
+					return layer;
+				})
 			});
 
     case LAYER_OPERATION_DONE:
@@ -138,17 +164,72 @@ const layers = (state = layersInitialState, action) => {
 			break;
 
     case LAYER_OPERATION_CROP:
-    if (action.layerID) {
-      return Object.assign({}, state, {
-        layers: /// set dimensions...
-        layerOperation: {
-          id: action.layerID,
-          type: LAYER_OPERATION_CROP,
-          cropData: action.cropData
+      if (action.layerID) {
+        return Object.assign({}, state, {
+          layerOperation: {
+            id: action.layerID,
+            type: LAYER_OPERATION_CROP,
+            cropData: action.cropData
+          }
+        });
+      }
+      break;
+
+    case LAYER_OPERATION_RESIZE:
+      if (action.layerID) {
+        action.layerID = action.layerID*1;
+        return Object.assign({}, state, {
+          layers: Object.assign([], state.layers).map(layer => {
+            if (layer.id === action.layerID)
+              return Object.assign({}, layer, {
+                width: action.dimensions.width,
+                height: action.dimensions.height
+              })
+            return layer;
+          })
+        });
+      }
+			break;
+
+    case LAYER_OPERATION_MERGE: {
+      let layerIndex;
+      action.layerID = action.layerID*1;
+      state.layers.find((layer, index) => {
+        if (layer.id === action.layerID) {
+          layerIndex = index;
+          return true;
         }
+        return false;
       });
+      const targetLayer = state.layers[layerIndex-1];
+      if (targetLayer) {
+        return Object.assign({}, state, {
+          selectedID: targetLayer.id,
+          layerOperation: {
+            id: targetLayer.id,
+            type: LAYER_OPERATION_MERGE,
+            targetID: action.layerID
+          }
+  			});
+      }
+      break;
+		}
+
+    case LAYER_OPERATION_CLONE: {
+      action.layerID = action.layerID*1;
+      const cloneLayer = Object.assign({}, state.layers.find(layer => layer.id === action.layerID));
+      cloneLayer.id = layerIdHandler.next();
+      cloneLayer.title = cloneLayer.title + ' (copy)';
+      return Object.assign({}, state, {
+        selectedID: cloneLayer.id,
+				layers: state.layers.concat([cloneLayer]),
+        layerOperation: {
+          id: cloneLayer.id,
+          type: LAYER_OPERATION_CLONE,
+          targetID: action.layerID
+        }
+			});
     }
-    break;
 
     case LAYER_OPERATION_UNDO:
       if (!state.history.length) break;
@@ -156,81 +237,12 @@ const layers = (state = layersInitialState, action) => {
       const lastHistoryData = newState.history.pop();
       return Object.assign({}, state, {
         history: newState.history,
-        layers: /// set dimensions...
         layerOperation: {
           id: lastHistoryData.layerID,
           type: LAYER_OPERATION_UNDO,
-          imageData: lastHistoryData.data
+          imageData: lastHistoryData.imageData
         }
       });
-
-    case LAYER_OPERATION_RESIZE:
-      if (action.layerID) {
-        action.layerID = action.layerID*1;
-        return Object.assign({}, state, {
-          layers: state.layers.map(layer => {
-            if (layer.id === action.layerID)
-              return Object.assign({}, layer, {
-                width: action.dimensions.width,
-                height: action.dimensions.height
-              });
-            return layer;
-          })
-        });
-      }
-			break;
-
-		case SET_LAYERTITLE:
-			return Object.assign({}, state, {
-				layers: state.layers.map((layer, index) => {
-					if (layer.id === action.layerID*1)
-						layer.title = action.title;
-					return layer;
-				})
-			});
-
-		case SET_NEXTLAYERCONTENT: {
-			if (!action.content) break;
-			return Object.assign({}, state, {
-				nextLayerContent: {
-					type: action.content.type,
-					data: action.content.data
-				}
-			});
-		}
-
-
-
-		case MERGE_LAYERS: {
-			const layerSource = document.getElementById(LAYER_ID_PREFIX + action.sourceLayerID);
-			const layerDest = document.getElementById(LAYER_ID_PREFIX + action.destLayerID);
-			const sourceRect = layerSource.getBoundingClientRect();
-			const destRect = layerDest.getBoundingClientRect();
-			layerDest.getContext('2d').drawImage(
-				layerSource,
-				-(destRect.x - sourceRect.x),
-				-(destRect.y - sourceRect.y)
-			);
-      break;
-		}
-
-		case PUSH_HISTORY: {
-			if (!action.layerID) return state;
-			const layer = document.getElementById(LAYER_ID_PREFIX + action.layerID);
-			const nextData = state.history.concat({
-				layerID: action.layerID,
-				data: layer.getContext('2d').getImageData(
-					0, 0,
-					layer.width,
-					layer.height
-				)
-			});
-			if (state.history.length >= state.maxHistory)
-				nextData.shift();
-			return Object.assign({}, state, {
-				history: nextData
-			});
-		}
 
 		default: break;
 	}

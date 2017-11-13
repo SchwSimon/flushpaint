@@ -1,19 +1,8 @@
 import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
-
 import LayerDisplay from './LayerDisplay';
-
-import {
-	addLayer,
-	fillLayer,
-	clearLayer,
-	mergeLayers,
-	removeLayer,
-	drawLayerImage,
-	setColorToTransparent,
-	layerContentTypes,
-	cloneLayer,
-	LAYER_OPERATION_IMAGE
+import { addLayer, fillLayer, clearLayer, mergeLayers, removeLayer,
+ drawLayerImage, setColorToTransparent, cloneLayer, LAYER_OPERATION_IMAGE
 } from '../actions/index';
 
 import '../styles/LayerHandler.css';

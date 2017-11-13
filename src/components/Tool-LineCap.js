@@ -1,26 +1,28 @@
 import React, { Component } from 'react';
-
 import { connect } from 'react-redux';
-import {
-	setLineCap,
-	LineCaps
-} from '../actions/index';
+import { setLineCap } from '../actions/index';
 
 import '../styles/Tool-LineCap.css';
+
+export const LineCaps = {
+	ROUND: 'round',
+	SQUARE: 'square',
+	BUTT: 'butt'
+};
 
 class LineCap extends Component {
 	constructor(props) {
 		super(props);
-		
+
 		this.onClick = this.onClick.bind(this);
 	}
-	
+
 	// on line cap click
 	onClick(event) {
 			// set the new stroke line cap
 		this.props.dispatch(setLineCap(event.target.dataset.cap));
 	}
-	
+
 	render() {
 		return (
 			<div>

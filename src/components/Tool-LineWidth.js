@@ -1,27 +1,24 @@
 import React, { Component } from 'react';
-
 import { connect } from 'react-redux';
-import {
-	setLineWidth,
-	LineCaps
-} from '../actions/index';
+import { setLineWidth } from '../actions/index';
+import { LineCaps } from './Tool-LineCap';
 
 import '../styles/Tool-LineWidth.css';
 
 class LineWidth extends Component {
 	constructor(props) {
 		super(props);
-		
+
 		this.onChange = this.onChange.bind(this);
 	}
-	
+
 	// on range input change
 	onChange(event) {
 			// set the new stroke width
 		this.props.dispatch(setLineWidth(event.target.value));
 	}
-	
-	render() {		
+
+	render() {
 		return (
 			<div className="LineWidth">
 				<input

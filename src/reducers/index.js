@@ -1,12 +1,12 @@
 import { combineReducers } from 'redux';
-import {
-	LineCaps,
-	GlobalCompositeOperations,
-	ToolList,
-} from '../actions/index';
 
 import { live } from './live';
+
 import { settings } from './settings';
+import { GlobalCompositeOperations } from '../components/Tool-GlobalCompositeOperation';
+import { ToolList } from '../components/Tool';
+import { LineCaps } from '../components/Tool-LineCap';
+
 import layers, { layersInitialState } from './layers';
 
 export const initialState = {

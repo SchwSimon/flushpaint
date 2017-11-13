@@ -3,12 +3,13 @@ import { connect } from 'react-redux';
 import TextBox from '../components/Tool-TextBox';
 import Crop from '../components/Tool-Crop';
 import { toggleDrawing, toggleMoving, setInteractionTimeout,
- pushHistory, resizeLayer, ToolList, GlobalCompositeOperations, removeLayer,
- setStrokeStyle, selectLayer, fillLayer, layerOperationDone, putLayerImageData,
+ pushHistory, resizeLayer, removeLayer,
+ setStrokeStyle, selectLayer, layerOperationDone,
  LAYER_OPERATION_FILL, LAYER_OPERATION_CLEAR, LAYER_OPERATION_COLORTOTRANSPARENT,
  LAYER_OPERATION_IMAGEDATA, LAYER_OPERATION_IMAGE, LAYER_OPERATION_UNDO,
- LAYER_OPERATION_RESIZE, LAYER_OPERATION_CROP, LAYER_OPERATION_CLONE,
- LAYER_OPERATION_MERGE } from '../actions/index';
+ LAYER_OPERATION_CROP, LAYER_OPERATION_CLONE, LAYER_OPERATION_MERGE } from '../actions/index';
+import { GlobalCompositeOperations } from './Tool-GlobalCompositeOperation';
+import { ToolList } from './Tool';
 
 import '../styles/Layer.css';
 

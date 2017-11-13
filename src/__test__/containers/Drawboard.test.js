@@ -1,15 +1,28 @@
 import React from 'react';
 import Enzyme, { shallow } from 'enzyme';
+import sinon from 'sinon';
 import Adapter from 'enzyme-adapter-react-16';
+import { addLayer } from '../../actions/index';
 
 Enzyme.configure({ adapter: new Adapter() });
 
 import { Drawboard } from '../../containers/Drawboard';
 
 describe('<Drawboard />', () => {
-	const wrapper = shallow(<Drawboard />);
+	const dispatch = sinon.spy();
+	const wrapper = shallow(<Drawboard dispatch={dispatch} />);
 
 	it('renders without crashing', () => {
 		expect(wrapper.length).toBe(1);
   });
+
+	describe('function componentDidMount()', () => {
+		it('must trigger dispatch with the given callback', () => {
+			const addLayerArgs = {
+				width: 600,
+				height: 400
+			};
+			expect(dispatch.calledWith(addLayer(addLayerArgs))).toBeTruthy();
+		});
+	});
 });

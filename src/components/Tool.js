@@ -1,11 +1,17 @@
 import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
-import {
-	setTool,
-	ToolList
-} from '../actions/index';
+import { setTool } from '../actions/index';
 
 import '../styles/Tool.css';
+
+export const ToolList = {
+	BRUSH: 'BRUSH',
+	ERASER: 'ERASER',
+	PIPETTE: 'PIPETTE',
+	CROP: 'CROP',
+	MOVE: 'MOVE',
+	TEXT: 'TEXT'
+};
 
 /**
  * Canvas interaction / manipulation tools
@@ -13,7 +19,7 @@ import '../styles/Tool.css';
 class Tool extends PureComponent {
 	constructor(props) {
 		super(props);
-		
+
 		this.state = {
 			name: ((tool) => {
 				switch(tool) {
@@ -27,15 +33,15 @@ class Tool extends PureComponent {
 				}
 			})(this.props.tool)
 		}
-		
+
 		this.onClick = this.onClick.bind(this);
 	}
-	
+
 	onClick() {
 		// select the tool
 		this.props.dispatch(setTool(this.props.tool));
 	}
-	
+
 	render() {
 		return (
 			<div
@@ -51,4 +57,3 @@ export default connect(
 		selectedTool: state.settings.tool	// currently selected tool
 	})
 )(Tool);
-

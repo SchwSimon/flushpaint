@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
 
-import Tool from  '../components/Tool';
+import Tool, { ToolList } from  '../components/Tool';
 import LineWidth from  '../components/Tool-LineWidth';
 import LineCap from  '../components/Tool-LineCap';
 import History from  '../components/Tool-History';
@@ -10,7 +10,7 @@ import LayerHandler from  '../components/LayerHandler';
 import LayerRenderer from '../components/LayerRenderer';
 import { SketchPicker } from 'react-color';
 
-import { ToolList, setStrokeStyle } from '../actions/index';
+import { setStrokeStyle } from '../actions/index';
 
 import '../styles/Settings.css';
 

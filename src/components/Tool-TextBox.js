@@ -4,7 +4,7 @@ import { PhotoshopPicker } from 'react-color';
 
 import '../styles/Tool-TextBox.css';
 
-class TextBox extends Component {
+export class TextBox extends Component {
 	constructor(props) {
 		super(props);
 

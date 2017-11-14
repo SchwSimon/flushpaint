@@ -2,7 +2,8 @@ import { ADD_LAYER, REMOVE_LAYER, SELECT_LAYER, TOGGLE_LAYER, SORT_LAYERS,
  LAYER_PUSH_HISTORY, LAYER_SET_TITLE, LAYER_OPERATION_FILL, LAYER_OPERATION_CLEAR,
  LAYER_OPERATION_MERGE, LAYER_OPERATION_COLORTOTRANSPARENT, LAYER_OPERATION_RESIZE,
  LAYER_OPERATION_CROP, LAYER_OPERATION_IMAGEDATA, LAYER_OPERATION_IMAGE,
- LAYER_OPERATION_CLONE, LAYER_OPERATION_UNDO, LAYER_OPERATION_DONE } from '../actions/index';
+ LAYER_OPERATION_CLONE, LAYER_OPERATION_UNDO, LAYER_OPERATION_DONE,
+ INTERACTION_ENABLE_DRAWING, INTERACTION_ENABLE_MOVING, INTERACTION_DISABLE } from '../actions/index';
 import layerIdHandler from './layers/layerIdHandler';
 import generateLayerStructure, { LAYER_ID_PREFIX } from './layers/generateLayerStructure';
 import { arrayMove } from 'react-sortable-hoc';
@@ -10,6 +11,7 @@ import { arrayMove } from 'react-sortable-hoc';
 export const layersInitialState = {
 	selectedID: null,
 	idPrefix: LAYER_ID_PREFIX,
+  interaction: null,
 	layers: [],
   layerOperation: null,
 	history: [],
@@ -18,6 +20,27 @@ export const layersInitialState = {
 
 const layers = (state = layersInitialState, action) => {
 	switch(action.type) {
+    case INTERACTION_ENABLE_DRAWING:
+      return Object.assign({}, state, {
+				interaction: {
+          layerID: action.layerID,
+          draw: true
+        }
+      });
+
+    case INTERACTION_ENABLE_MOVING:
+      return Object.assign({}, state, {
+				interaction: {
+          layerID: action.layerID,
+          move: true
+        }
+      });
+
+    case INTERACTION_DISABLE:
+      return Object.assign({}, state, {
+        interaction: null
+      });
+
 		case ADD_LAYER: {
 			const layerID = layerIdHandler.next();
       const layerOperation = action.layerOperation || {
@@ -82,7 +105,8 @@ const layers = (state = layersInitialState, action) => {
       return Object.assign({}, state, {
         history: history.concat([{
           layerID: action.layerID*1,
-          imageData: action.imageData
+          imageData: action.imageData,
+          position: action.position
         }])
       });
     }
@@ -100,6 +124,7 @@ const layers = (state = layersInitialState, action) => {
 			});
 
     case LAYER_OPERATION_DONE:
+      if (state.layerOperation === null) break;
       return Object.assign({}, state, {
         layerOperation: null
       });
@@ -240,7 +265,8 @@ const layers = (state = layersInitialState, action) => {
         layerOperation: {
           id: lastHistoryData.layerID,
           type: LAYER_OPERATION_UNDO,
-          imageData: lastHistoryData.imageData
+          imageData: lastHistoryData.imageData,
+          position: lastHistoryData.position
         }
       });
 

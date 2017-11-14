@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
 import Layer from '../components/Layer';
-import { addLayer } from '../actions/index';
+import { addLayer, disableInteraction } from '../actions/index';
 
 import '../styles/Drawboard.css';
 
@@ -19,7 +19,7 @@ export class Drawboard extends PureComponent {
 
 	render() {
 		return (
-			<div id="Drawboard">
+			<div id="Drawboard" onMouseUp={() => this.props.dispatch(disableInteraction())}>
 				{this.props.layers && this.props.layers.map(layer => (
 					<Layer
 						key={layer.id}

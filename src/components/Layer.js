@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import TextBox from '../components/Tool-TextBox';
 import Crop from '../components/Tool-Crop';
-import { toggleDrawing, toggleMoving, setInteractionTimeout,
+import { enableDrawing, enableMoving, disableInteraction,
  pushHistory, resizeLayer, removeLayer,
  setStrokeStyle, selectLayer, layerOperationDone,
  LAYER_OPERATION_FILL, LAYER_OPERATION_CLEAR, LAYER_OPERATION_COLORTOTRANSPARENT,
@@ -13,7 +13,7 @@ import { ToolList } from './Tool';
 
 import '../styles/Layer.css';
 
-class Layer extends Component {
+export class Layer extends Component {
 	constructor(props) {
 		super(props);
 
@@ -23,10 +23,9 @@ class Layer extends Component {
 			left: 0	// the layer's left position
 		};
 
-		this.mouseDown = this.mouseDown.bind(this);
+		this.onMouseDown = this.onMouseDown.bind(this);
 		this.disableInteraction = this.disableInteraction.bind(this);
-		this.mouseMove = this.mouseMove.bind(this);
-		this.onMouseOut = this.onMouseOut.bind(this);
+		this.onMouseMove = this.onMouseMove.bind(this);
 		this.onTextPrint = this.onTextPrint.bind(this);
 	}
 
@@ -34,12 +33,7 @@ class Layer extends Component {
 		if (!this.props.layerOperation || this.props.layerOperation.id !== this.props.layerID) return;
 		this.doLayerOperation(this.props.layerOperation);
 			// center this layer
-		this.centerLayer();
-	}
-
-		// center the layer in relation to the drawboard
-	centerLayer() {
-		const drawboard = document.getElementById('Drawboard');
+    const drawboard = document.getElementById('Drawboard');
 		this.setState({
 			top: ((drawboard.clientHeight/2) - (this.layer.height/2)),
 			left: ((drawboard.clientWidth/2) - (this.layer.width/2))
@@ -47,7 +41,7 @@ class Layer extends Component {
 	}
 
 		// layer's mouse down handler
-	mouseDown(event) {
+	onMouseDown(event) {
 		// prevent right click
 		if (event.button === 2) return;
 
@@ -84,47 +78,28 @@ class Layer extends Component {
 		});
 	}
 
-	// set the clicked color as selected color
-	absorbColor() {
-			// the pixel color data
-		const color = this.layer.getContext( "2d" ).getImageData(
-			this.state.clientX - this.state.offsetLeft,
-			this.state.clientY - this.state.offsetTop,
-			1, 1
-		).data;
-			// set pixel color as selected color
-		this.props.dispatch(setStrokeStyle(color));
-	}
-
 	// on mouse move on this layer
-	mouseMove(event) {
+	onMouseMove(event) {
 		event.preventDefault();
 		event.stopPropagation();
-			// return if this layer id is not the live layer id
-		if (this.props.layerID !== this.props.live.layerID) return;
-			// clear the mouse out timeout
-		clearTimeout(this.props.live.interactionTimeout);
-
-		if (this.props.live.isDrawing)
-			return this.draw(event.clientX, event.clientY);
-		else if (this.props.live.isMoving)
-			return this.move(event.clientX, event.clientY);
+    if (this.props.interaction && this.props.interaction.layerID === this.props.layerID) {
+      if (this.props.interaction.draw)
+        this.draw(event.clientX, event.clientY);
+      else if (this.props.interaction.move)
+        this.move(event.clientX, event.clientY);
+    }
 	}
 
-	// enable layer moving for this layer
+	// enable layer moving
 	enableMoving() {
-			// clear the mouse out timeout
-		clearTimeout(this.props.live.interactionTimeout);
 			// set this layer as selected layer
 		this.props.dispatch(selectLayer(this.props.layerID));
-			// enable layer moving for this layer
-		this.props.dispatch(toggleMoving(true, this.props.layerID));
+			// enable moving
+		this.props.dispatch(enableMoving(this.props.layerID));
 	}
 
 	// enable drawing for this layer
 	enableDrawing() {
-			// clear the mouse out timeout
-		clearTimeout(this.props.live.interactionTimeout);
 			// push history
     this.pushHistory();
 			// set the layer's (canvas) context props
@@ -132,37 +107,21 @@ class Layer extends Component {
 		ctx.lineCap = this.props.settings.lineCap;
 		ctx.lineWidth = this.props.settings.lineWidth;
 		if (this.props.settings.tool === ToolList.ERASER) {
-			ctx.strokeStyle = "black";	// any color can be set to erase (unless the alpha is 1)
+			ctx.strokeStyle = 'black';	// any color can be set to erase (unless the alpha is 1)
 			ctx.globalCompositeOperation = GlobalCompositeOperations.DESTINATION_OUT;	// destination out will erase the color
 		} else {
 			ctx.strokeStyle = this.props.settings.strokeStyle;
 			ctx.globalCompositeOperation = this.props.settings.globalCompositeOperation;
 		}
 			// enable drawing for this layer
-		this.props.dispatch(toggleDrawing(true, this.props.layerID));
+    this.props.dispatch(enableDrawing(this.props.layerID));
 			// trigger draw here to draw even if the user clicked only once without moving
 		this.draw();
 	}
 
 	// disable the live interaction (drawing/moving)
 	disableInteraction() {
-			// clear the mouse out timeout
-		clearTimeout(this.props.live.interactionTimeout);
-			// disable layer drawing
-		this.props.dispatch(toggleDrawing(false));
-			// disable layer moving
-		this.props.dispatch(toggleMoving(false));
-	}
-
-	// start a timeout on layer mouse out to disable live interaction (drawing/moving)
-	// when leaving the layer for more than x milliseconds
-	onMouseOut() {
-			// clear the mouse out timeout
-		clearTimeout(this.props.live.interactionTimeout);
-			// disable live interaction when leaving the live layer for 700 milliseconds
-		this.props.dispatch(setInteractionTimeout(setTimeout(
-			this.disableInteraction, 700
-		)));
+    this.props.dispatch(disableInteraction());
 	}
 
 	// draw on layer
@@ -188,6 +147,18 @@ class Layer extends Component {
 		}));
 	}
 
+  // set the clicked color as selected color
+	absorbColor() {
+			// the pixel color data
+		const color = this.layer.getContext('2d').getImageData(
+			this.state.clientX - this.state.offsetLeft,
+			this.state.clientY - this.state.offsetTop,
+			1, 1
+		).data;
+			// set pixel color as selected color
+		this.props.dispatch(setStrokeStyle(Array.from(color)));
+	}
+
 	// print a given text on to this layer
 	onTextPrint(text, settings) {
     this.pushHistory();
@@ -197,18 +168,24 @@ class Layer extends Component {
 		ctx.fillText(text, settings.x, settings.y);
 	}
 
-  pushHistory() {
+  pushHistory(withPosition = false) {
     this.props.dispatch(pushHistory(
       this.props.layerID,
       this.layer.getContext('2d').getImageData(
 				0, 0,
 				this.layer.width,
 				this.layer.height
-			)
+			),
+      (!withPosition) ? null : {
+        left: this.state.left,
+        top: this.state.top
+      }
     ));
   }
 
 	doLayerOperation(operation) {
+    this.props.dispatch(layerOperationDone());
+
     const allowHistoryPush = !operation.preventHistoryPush;
 
 		switch(operation.type) {
@@ -285,13 +262,17 @@ class Layer extends Component {
 
       case LAYER_OPERATION_CROP: {
         if (allowHistoryPush)
-          this.pushHistory();
+          this.pushHistory(true);
         const imageData = this.layer.getContext('2d').getImageData(
           operation.cropData.left,
           operation.cropData.top,
           operation.cropData.width,
           operation.cropData.height
         );
+        this.setState(prevState => ({
+          left: prevState.left + operation.cropData.left,
+          top: prevState.top + operation.cropData.top
+        }));
         this.props.dispatch(resizeLayer(this.props.layerID, {
           width: operation.cropData.width,
           height: operation.cropData.height
@@ -327,6 +308,11 @@ class Layer extends Component {
       }
 
       case LAYER_OPERATION_UNDO:
+        if (operation.position)
+          this.setState(prevState => ({
+            left: operation.position.left,
+            top: operation.position.top
+          }));
         this.props.dispatch(resizeLayer(this.props.layerID, {
           width: operation.imageData.width,
           height: operation.imageData.height
@@ -339,8 +325,6 @@ class Layer extends Component {
 
 			default: break;
 		}
-
-		this.props.dispatch(layerOperationDone());
 	}
 
 	shouldComponentUpdate(nextProps, nextState) {
@@ -360,9 +344,7 @@ class Layer extends Component {
 	}
 
 	componentWillUpdate(nextProps) {
-		if (this.props.settings.tool !== nextProps.settings.tool)
-			this.disableInteraction();
-		else if (nextProps.layerOperation && nextProps.layerOperation.id === nextProps.layerID)
+		if (nextProps.layerOperation && nextProps.layerOperation.id === nextProps.layerID)
 			this.doLayerOperation(nextProps.layerOperation);
 	}
 
@@ -385,10 +367,9 @@ class Layer extends Component {
 					ref={canvas => this.layer = canvas}
 					width={this.props.width}
 					height={this.props.height}
-					onMouseDown={this.mouseDown}
-					onMouseMove={this.mouseMove}
+					onMouseDown={this.onMouseDown}
+					onMouseMove={this.onMouseMove}
 					onMouseUp={this.disableInteraction}
-					onMouseOut={this.onMouseOut}
 				></canvas>
 				{this.props.settings.tool === ToolList.TEXT && this.state.showTextbox &&
 					<TextBox
@@ -413,9 +394,8 @@ class Layer extends Component {
 
 export default connect(
 	state => ({
-		live: state.live,																	// the live interaction params
+    interaction: state.layers.interaction,
 		layerOperation: state.layers.layerOperation,			// an operation to execute on a specific layer
-		nextLayerContent: state.layers.nextLayerContent,	// the next layer params
 		layerIdPrefix: state.layers.idPrefix,							// the layer id prefix
 		settings: state.settings													// the settings
 	})

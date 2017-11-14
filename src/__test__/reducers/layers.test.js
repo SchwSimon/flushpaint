@@ -1,5 +1,6 @@
 import layers, { layersInitialState } from '../../reducers/layers';
-import { ADD_LAYER, REMOVE_LAYER, SELECT_LAYER, TOGGLE_LAYER, SORT_LAYERS,
+import { INTERACTION_ENABLE_DRAWING, INTERACTION_ENABLE_MOVING, INTERACTION_DISABLE,
+ ADD_LAYER, REMOVE_LAYER, SELECT_LAYER, TOGGLE_LAYER, SORT_LAYERS,
  LAYER_PUSH_HISTORY, LAYER_SET_TITLE, LAYER_OPERATION_FILL, LAYER_OPERATION_CLEAR,
  LAYER_OPERATION_MERGE, LAYER_OPERATION_COLORTOTRANSPARENT, LAYER_OPERATION_RESIZE,
  LAYER_OPERATION_CROP, LAYER_OPERATION_IMAGEDATA, LAYER_OPERATION_IMAGE,
@@ -12,6 +13,7 @@ describe('reducer: layers', () => {
   const defaultState = {
     selectedID: null,
     idPrefix: LAYER_ID_PREFIX,
+    interaction: null,
     layers: [],
     layerOperation: null,
     history: [],
@@ -24,6 +26,39 @@ describe('reducer: layers', () => {
 
 	it('return initialState on default action', () => {
 		expect(layers(undefined, {type: null})).toEqual(defaultState);
+  });
+
+  describe('interactions', () => {
+    const action = {
+      layerID: 2
+    };
+
+    describe('INTERACTION_ENABLE_DRAWING', () => {
+      it('must set the drawing interaction state', () => {
+        action.type = INTERACTION_ENABLE_DRAWING;
+    		expect(layers(undefined, action).interaction).toEqual({
+          layerID: 2,
+          draw: true
+        });
+      });
+    });
+
+    describe('INTERACTION_ENABLE_MOVING', () => {
+      it('must set the drawing interaction state', () => {
+        action.type = INTERACTION_ENABLE_MOVING;
+    		expect(layers(undefined, action).interaction).toEqual({
+          layerID: 2,
+          move: true
+        });
+      });
+    });
+
+    describe('INTERACTION_DISABLE', () => {
+      it('must set the interaction state to null', () => {
+        action.type = INTERACTION_DISABLE;
+    		expect(layers(undefined, action).interaction).toBeNull();
+      });
+    });
   });
 
   describe('ADD_LAYER', () => {
@@ -87,7 +122,7 @@ describe('reducer: layers', () => {
 
     it('must set the selectedID to null', () => {
       action.layerID = 1;
-  		expect(layers(state, action).selectedID).toBe(null);
+  		expect(layers(state, action).selectedID).toBeNull();
     });
 
     it('must remove the layer with the given id', () => {
@@ -172,7 +207,8 @@ describe('reducer: layers', () => {
     const action = {
       type: LAYER_PUSH_HISTORY,
       layerID: 1,
-      imageData: 'image data'
+      imageData: 'image data',
+      position: 'position'
     };
 
     it('must add a new history element', () => {
@@ -182,7 +218,8 @@ describe('reducer: layers', () => {
 
   		expect(layers(state, action).history).toEqual([{
         layerID: action.layerID,
-        imageData: action.imageData
+        imageData: action.imageData,
+        position: action.position
       }]);
     });
 
@@ -193,7 +230,8 @@ describe('reducer: layers', () => {
       };
   		expect(layers(state, action).history).toEqual([{}, {
         layerID: action.layerID,
-        imageData: action.imageData
+        imageData: action.imageData,
+        position: action.position
       }]);
     });
   });
@@ -243,7 +281,7 @@ describe('reducer: layers', () => {
       it('must set the layerOperation to null', () => {
         state.layerOperation = 'not null';
         action.type = LAYER_OPERATION_DONE;
-    		expect(layers(state, action).layerOperation).toBe(null);
+    		expect(layers(state, action).layerOperation).toBeNull();
       });
     });
 
@@ -437,7 +475,8 @@ describe('reducer: layers', () => {
         action.type = LAYER_OPERATION_UNDO;
         state.history = [{},{},{
           layerID: 1,
-          imageData: 'image data'
+          imageData: 'image data',
+          position: 'position'
         }];
       });
 
@@ -445,7 +484,8 @@ describe('reducer: layers', () => {
         expect(layers(state, action).layerOperation).toEqual({
           id: 1,
           type: LAYER_OPERATION_UNDO,
-          imageData: 'image data'
+          imageData: 'image data',
+          position: 'position'
         });
       });
 

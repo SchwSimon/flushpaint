@@ -112,7 +112,7 @@ class LayerRenderer extends PureComponent {
 
 	render() {
 		return (
-			<div className="LayerRenderer" onClick={this.showCollageImage} onMouseEnter={this.renderLayers}>
+			<div className="LayerRenderer" onClick={this.showCollageImage}>
 				<canvas
 					className="LayerRenderer-canvas"
 					ref={canvas => this.canvas = canvas}
@@ -135,6 +135,6 @@ export default connect(
 	state => ({
 		state: state,	// just for the updating
 		layerIdPrefix: state.layers.idPrefix,				// the layer's id prefix
-		layers: state.layers.layers		// the ordered layers array (ids only)
+		layers: state.layers.layers,		// the ordered layers array (ids only)
 	})
 )(LayerRenderer);

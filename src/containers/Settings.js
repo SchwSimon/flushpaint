@@ -9,8 +9,7 @@ import GlobalCompositeOperation from  '../components/Tool-GlobalCompositeOperati
 import LayerHandler from  '../components/LayerHandler';
 import LayerRenderer from '../components/LayerRenderer';
 import { SketchPicker } from 'react-color';
-
-import { setStrokeStyle } from '../actions/index';
+import { setStrokeStyle, disableInteraction } from '../actions/index';
 
 import '../styles/Settings.css';
 
@@ -20,27 +19,29 @@ import '../styles/Settings.css';
 export class Settings extends PureComponent {
 	render() {
 		return (
-			<div className="Settings">
-				<div className="Settings-container">
-					<SketchPicker
-						color={this.props.strokeStyle}
-						onChangeComplete={color => this.props.dispatch(setStrokeStyle(color.rgb))}
-					/>
-				</div>
-				<div className="Settings-container">
-					<LineWidth />
-					<LineCap />
-					<Tool tool={ToolList.BRUSH} />
-					<GlobalCompositeOperation />
-					{Object.keys(ToolList).map((key, index) => {
-						return (ToolList[key] === ToolList.BRUSH)
-							? null : <Tool key={index} tool={ToolList[key]} />
-					})}
-					<LayerRenderer />
-					<History />
-				</div>
-				<div className="Settings-container">
-					<LayerHandler />
+			<div onMouseEnter={() => this.props.dispatch(disableInteraction())}>
+				<div className="Settings">
+					<div className="Settings-container">
+						<SketchPicker
+							color={this.props.strokeStyle}
+							onChangeComplete={color => this.props.dispatch(setStrokeStyle(color.rgb))}
+						/>
+					</div>
+					<div className="Settings-container">
+						<LineWidth />
+						<LineCap />
+						<Tool tool={ToolList.BRUSH} />
+						<GlobalCompositeOperation />
+						{Object.keys(ToolList).map((key, index) => {
+							return (ToolList[key] === ToolList.BRUSH)
+								? null : <Tool key={index} tool={ToolList[key]} />
+						})}
+						<LayerRenderer />
+						<History />
+					</div>
+					<div className="Settings-container">
+						<LayerHandler />
+					</div>
 				</div>
 			</div>
 		);
@@ -49,5 +50,7 @@ export class Settings extends PureComponent {
 
 
 export default connect(
-	state => ({ strokeStyle: state.settings.strokeStyle })		// the currently selected strokeStyle (color)
+	state => ({
+		strokeStyle: state.settings.strokeStyle	// the currently selected strokeStyle (color)
+	})
 )(Settings);

@@ -1,27 +1,4 @@
 /**
- *		LIVE
- */
-export const TOGGLE_DRAWING = 'TOGGLE_DRAWING';
-export const TOGGLE_MOVING = 'TOGGLE_MOVING';
-export const SET_INTERACTIONTIMEOUT = 'SET_INTERACTIONTIMEOUT';
-
-export const toggleDrawing = (bool, layerID) => ({
-	type: TOGGLE_DRAWING,
-	bool,
-	layerID
-});
-export const toggleMoving = (bool, layerID) => ({
-	type: TOGGLE_MOVING,
-	bool,
-	layerID
-});
-export const setInteractionTimeout = (timeout) => ({
-	type: SET_INTERACTIONTIMEOUT,
-	timeout
-});
-
-
-/**
  *		SETTINGS
  */
 export const SET_STROKESTYLE = 'SET_STROKESTYLE';
@@ -30,21 +7,21 @@ export const SET_LINECAP = 'SET_LINECAP';
 export const SET_GLOBALCOMPOSITEOPERATION = 'SET_GLOBALCOMPOSITEOPERATION';
 export const SET_TOOL = 'SET_TOOL';
 
-export const setStrokeStyle = (style) => ({
+export const setStrokeStyle = (strokeStyle) => ({
 	type: SET_STROKESTYLE,
-	style
+	strokeStyle
 });
-export const setLineWidth = (width) => ({
+export const setLineWidth = (lineWidth) => ({
 	type: SET_LINEWIDTH,
-	width
+	lineWidth
 });
-export const setLineCap = (cap) => ({
+export const setLineCap = (lineCap) => ({
 	type: SET_LINECAP,
-	cap
+	lineCap
 });
-export const setGlobalCompositeOperation = (operation) => ({
+export const setGlobalCompositeOperation = (globalCompositeOperation) => ({
 	type: SET_GLOBALCOMPOSITEOPERATION,
-	operation
+	globalCompositeOperation
 });
 export const setTool = (tool) => ({
 	type: SET_TOOL,
@@ -55,6 +32,9 @@ export const setTool = (tool) => ({
 /**
  *		LAYERS
  */
+export const INTERACTION_ENABLE_DRAWING = 'INTERACTION_ENABLE_DRAWING';
+export const INTERACTION_ENABLE_MOVING = 'INTERACTION_ENABLE_MOVING';
+export const INTERACTION_DISABLE = 'INTERACTION_DISABLE';
 export const ADD_LAYER = 'ADD_LAYER';
 export const REMOVE_LAYER = 'REMOVE_LAYER';
 export const SELECT_LAYER = 'SELECT_LAYER';
@@ -74,6 +54,17 @@ export const LAYER_OPERATION_CLONE = 'LAYER_OPERATION_CLONE';
 export const LAYER_OPERATION_UNDO = 'LAYER_OPERATION_UNDO';
 export const LAYER_OPERATION_DONE = 'LAYER_OPERATION_DONE';
 
+export const enableDrawing = (layerID) => ({
+	type: INTERACTION_ENABLE_DRAWING,
+	layerID
+});
+export const enableMoving = (layerID) => ({
+	type: INTERACTION_ENABLE_MOVING,
+	layerID
+});
+export const disableInteraction = () => ({
+	type: INTERACTION_DISABLE
+});
 export const addLayer = (dimensions, layerOperation) => ({
 	type: ADD_LAYER,
 	dimensions,
@@ -143,14 +134,15 @@ export const drawLayerImage = (layerID, image) => ({
 	layerID,
 	image
 });
-export const pushHistory = (layerID, imageData) => ({
+export const pushHistory = (layerID, imageData, position) => ({
 	type: LAYER_PUSH_HISTORY,
 	layerID,
-	imageData
+	imageData,
+	position
 });
 export const undoHistory = () => ({
 	type: LAYER_OPERATION_UNDO
 });
 export const layerOperationDone = () => ({
 	type: LAYER_OPERATION_DONE
-})
+});

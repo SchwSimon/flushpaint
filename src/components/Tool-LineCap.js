@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
 import { setLineCap } from '../actions/index';
 
@@ -10,7 +10,7 @@ export const LineCaps = {
 	BUTT: 'butt'
 };
 
-class LineCap extends Component {
+class LineCap extends PureComponent {
 	constructor(props) {
 		super(props);
 
@@ -26,15 +26,18 @@ class LineCap extends Component {
 	render() {
 		return (
 			<div>
-				{Object.keys(LineCaps).map((key, index) => {
-					return (
-						<div className={'LineCap-button' + ((this.props.lineCap === LineCaps[key]) ? ' active' : '')} key={index}>
-							<div className={LineCaps[key]} style={{backgroundColor:this.props.strokeStyle}}></div>
-							<div className="centerer"></div>
-							<div className="LineCap-trigger" onClick={this.onClick} data-cap={LineCaps[key]}></div>
-						</div>
-					);
-				})}
+				{Object.keys(LineCaps).map((key, index) => (
+					<div
+						className={'LineCap-button' + ((this.props.lineCap === LineCaps[key]) ? ' active' : '')}
+						key={index}
+					>
+						<div className={LineCaps[key]} style={{
+							backgroundColor: this.props.strokeStyle
+						}}></div>
+						<div className="centerer"></div>
+						<div className="LineCap-trigger" onClick={this.onClick} data-cap={LineCaps[key]}></div>
+					</div>
+				))}
 			</div>
 		);
 	}

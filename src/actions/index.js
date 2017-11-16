@@ -41,6 +41,7 @@ export const SELECT_LAYER = 'SELECT_LAYER';
 export const TOGGLE_LAYER = 'TOGGLE_LAYER';
 export const SORT_LAYERS = 'SORT_LAYERS';
 export const LAYER_PUSH_HISTORY = 'LAYER_PUSH_HISTORY';
+export const LAYER_UPDATE_POSITION = 'LAYER_UPDATE_POSITION';
 export const LAYER_SET_TITLE = 'LAYER_SET_TITLE';
 export const LAYER_OPERATION_FILL = 'LAYER_OPERATION_FILL';
 export const LAYER_OPERATION_CLEAR = 'LAYER_OPERATION_CLEAR';
@@ -138,6 +139,11 @@ export const pushHistory = (layerID, imageData, position) => ({
 	type: LAYER_PUSH_HISTORY,
 	layerID,
 	imageData,
+	position
+});
+export const updatePosition = (layerID, position) => ({
+	type: LAYER_UPDATE_POSITION,
+	layerID,
 	position
 });
 export const undoHistory = () => ({

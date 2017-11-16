@@ -1,5 +1,4 @@
 import React, { Component } from 'react';
-import { connect } from 'react-redux';
 import { PhotoshopPicker } from 'react-color';
 
 import '../styles/Tool-TextBox.css';
@@ -28,7 +27,7 @@ export class TextBox extends Component {
 	}
 
 	onFontSizeChange(event) {
-		this.setState({textSize:event.target.value*1})
+		this.setState({textSize: event.target.value*1})
 	}
 
 	onColorClick() {
@@ -36,7 +35,11 @@ export class TextBox extends Component {
 	}
 
 	onColorChange(color) {
-		this.setState({tempTextColor:color.hex})
+		this.setState({tempTextColor: color.hex})
+	}
+
+	onColorCancel() {
+		this.setState({showColorPicker: false})
 	}
 
 	onColorSubmit() {
@@ -44,20 +47,14 @@ export class TextBox extends Component {
 		this.onColorCancel();
 	}
 
-	onColorCancel() {
-		this.setState({showColorPicker: false})
-	}
-
 	onPrint() {
 		this.props.hideTextbox();
 
-		const x = this.props.posX-2;
 		let textParagraphs = this.textInput.value.split('\n');
 		for(let i = 0, len = textParagraphs.length; i < len; i++) {
-			let y = this.props.posY+this.state.textSize-6;
 			this.props.onTextPrint(textParagraphs[i], {
-				x: x,
-				y: y + (i* this.state.textSize) - 1,
+				x: this.props.posX - 2,
+				y: (this.props.posY + this.state.textSize - 6) + (i * this.state.textSize) - 1,
 				color: this.state.textColor,
 				size: this.state.textSize
 			});
@@ -74,18 +71,13 @@ export class TextBox extends Component {
 		return false;
 	}
 
-	componentWillUpdate(nextProps, nextState) {
-		if (this.state.textSize !== nextState.textSize) return;
-		this.textInput.focus();
-	}
-
 	render() {
 		return (
 			<div
 				className="TextBox"
 				style={{
-					top: this.props.posY - 48,
-					left: this.props.posX - 64,
+					top: (this.props.posY || 0) - 48,
+					left: (this.props.posX || 0) - 64,
 				}}
 			>
 				<div className="TextBox-settings">
@@ -128,4 +120,4 @@ export class TextBox extends Component {
 	}
 }
 
-export default connect()(TextBox);
+export default TextBox;

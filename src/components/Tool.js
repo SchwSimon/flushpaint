@@ -13,26 +13,21 @@ export const ToolList = {
 	TEXT: 'TEXT'
 };
 
+export const ToolNames = {
+	BRUSH: 'Paint',
+	ERASER: 'Erase',
+	PIPETTE: 'Color pipette',
+	CROP: 'Crop',
+	MOVE: 'Select / Move',
+	TEXT: 'Text'
+}
+
 /**
  * Canvas interaction / manipulation tools
  */
-class Tool extends PureComponent {
+export class Tool extends PureComponent {
 	constructor(props) {
 		super(props);
-
-		this.state = {
-			name: ((tool) => {
-				switch(tool) {
-					case ToolList.BRUSH: return 'Paint';				// paint color
-					case ToolList.ERASER: return 'Erase';			// erase (becomes transparent)
-					case ToolList.MOVE: return 'Select / Move';		// move & select
-					case ToolList.PIPETTE: return 'Color pipette';	// get the absorbed color
-					case ToolList.TEXT: return 'Text';						// add text
-					case ToolList.CROP: return 'Crop';					// crop the canvas
-					default: return this.props.tool;
-				}
-			})(this.props.tool)
-		}
 
 		this.onClick = this.onClick.bind(this);
 	}
@@ -47,7 +42,7 @@ class Tool extends PureComponent {
 			<div
 				className={'Tool Tool-' + this.props.tool + ' button' + ((this.props.tool === this.props.selectedTool) ? ' Tool-active' : '')}
 				onClick={this.onClick}
-			>{this.state.name}</div>
+			>{ToolNames[this.props.tool]}</div>
 		);
 	}
 }

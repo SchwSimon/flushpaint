@@ -1,8 +1,8 @@
 import { ADD_LAYER, REMOVE_LAYER, SELECT_LAYER, TOGGLE_LAYER, SORT_LAYERS,
- LAYER_PUSH_HISTORY, LAYER_SET_TITLE, LAYER_OPERATION_FILL, LAYER_OPERATION_CLEAR,
- LAYER_OPERATION_MERGE, LAYER_OPERATION_COLORTOTRANSPARENT, LAYER_OPERATION_RESIZE,
- LAYER_OPERATION_CROP, LAYER_OPERATION_IMAGEDATA, LAYER_OPERATION_IMAGE,
- LAYER_OPERATION_CLONE, LAYER_OPERATION_UNDO, LAYER_OPERATION_DONE,
+ LAYER_PUSH_HISTORY, LAYER_UPDATE_POSITION, LAYER_SET_TITLE, LAYER_OPERATION_FILL,
+ LAYER_OPERATION_CLEAR, LAYER_OPERATION_MERGE, LAYER_OPERATION_COLORTOTRANSPARENT,
+ LAYER_OPERATION_RESIZE, LAYER_OPERATION_CROP, LAYER_OPERATION_IMAGEDATA,
+ LAYER_OPERATION_IMAGE, LAYER_OPERATION_CLONE, LAYER_OPERATION_UNDO, LAYER_OPERATION_DONE,
  INTERACTION_ENABLE_DRAWING, INTERACTION_ENABLE_MOVING, INTERACTION_DISABLE } from '../actions/index';
 import layerIdHandler from './layers/layerIdHandler';
 import generateLayerStructure, { LAYER_ID_PREFIX } from './layers/generateLayerStructure';
@@ -108,6 +108,20 @@ const layers = (state = layersInitialState, action) => {
           imageData: action.imageData,
           position: action.position
         }])
+      });
+    }
+
+    case LAYER_UPDATE_POSITION: {
+      if (!action.layerID) break;
+      action.layerID = action.layerID*1;
+      return Object.assign({}, state, {
+        layers: state.layers.map(layer => {
+          if (layer.id === action.layerID)
+            return Object.assign({}, layer, {
+              position: action.position
+            });
+					return layer;
+        })
       });
     }
 

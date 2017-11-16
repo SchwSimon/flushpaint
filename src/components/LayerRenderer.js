@@ -6,55 +6,73 @@ import '../styles/LayerRenderer.css';
 /**
  * Renders a collage of all the existing layers
  */
-class LayerRenderer extends PureComponent {
+export class LayerRenderer extends PureComponent {
 	constructor(props) {
 		super(props);
 
 		this.state = {
 			isVisible: true,	// show the collage?
-			cWidth: 0,			// the layers collage width
-			cHeight: 0,		// the layers collage height,
-			sWidth: 0,			// the canvas style width
-			sHeight: 0			// the canvas style height
+			cWidth: 0,				// the layers collage width
+			cHeight: 0,				// the layers collage height
+			sWidth: 0,				// the canvas style width
+			sHeight: 0,				// the canvas style height
+			xMin: 0,					// the smallest x coordinate of the layer
+			yMin: 0						// the smallest y coordinate of the layer
 		}
 
-		this.renderLayers = this.renderLayers.bind(this);
 		this.showCollageImage = this.showCollageImage.bind(this);
 	}
 
-	componentDidMount() {
-			// small timeout to fully render the canvas on mount
-		setTimeout(this.renderLayers, 1);
+	componentWillReceiveProps(nextProps) {
+			// hide the canvas if there are no layers
+		if (!nextProps.layers.layers || nextProps.layers.layers.length === 0)
+			return this.hideCanvas();
+
+		this.updateThrottle(nextProps.layers.layers);
+
+			// show the camvas if it was hidden
+		this.showCanvas();
 	}
 
-	componentWillUpdate() {
-		this.renderLayers();
+	hideCanvas() {
+		if (this.state.isVisible)
+			this.setState({isVisible: false});
 	}
 
-	// render the collage
-	renderLayers() {
-		if (this.props.layers.length === 0) {
-				// hide the collage preview if there are no layers
-			return this.setState({isVisible: false});
-		} else if (!this.state.isVisible) {
-				// show the collage if it was hidden
+	showCanvas() {
+		if (!this.state.isVisible)
 			this.setState({isVisible: true});
-		}
+	}
 
+	updateThrottle(layers, update = false) {
+		if (!update || this.state.updateTimeout) {
+      clearTimeout(this.state.updateTimeout);
+      return this.setState({
+        updateTimeout: setTimeout(() => {
+          this.setState({updateTimeout: null}, () => {
+            this.updateThrottle(layers, true);
+          });
+        }, 150)
+      });
+    }
+
+		this.calculateLayerPositions(layers);
+	}
+
+	calculateLayerPositions(layers) {
 			// get the min & max coordinates of the layers
 		let xMin, xMax, yMin, yMax;
-		this.props.layers.forEach((layer, index) => {
-			const layerRect = document.getElementById(this.props.layerIdPrefix + layer.id).getBoundingClientRect();
+		layers.forEach((layer, index) => {
 			if (index === 0) {
-				xMin = layerRect.left;
-				xMax = layerRect.right;
-				yMin = layerRect.top;
-				yMax = layerRect.bottom;
+				xMin = layer.position.left;
+				xMax = layer.position.right;
+				yMin = layer.position.top;
+				yMax = layer.position.bottom;
 			} else {
-				xMin = (layerRect.left < xMin) ? layerRect.left : xMin;
-				xMax = (layerRect.right > xMax) ? layerRect.right : xMax;
-				yMin = (layerRect.top < yMin) ? layerRect.top : yMin;
-				yMax = (layerRect.bottom > yMax) ? layerRect.bottom : yMax;
+				xMin = (layer.position.left < xMin) ? layer.position.left : xMin;
+				xMax = (layer.position.right > xMax) ? layer.position.right : xMax;
+				yMin = (layer.position.top < yMin) ? layer.position.top : yMin;
+				yMax = (layer.position.bottom > yMax) ? layer.position.bottom : yMax;
 			}
 		});
 
@@ -81,28 +99,36 @@ class LayerRenderer extends PureComponent {
 				cWidth: cWidth,
 				cHeight: cHeight,
 				sWidth: sWidth,
-				sHeight: sHeight
+				sHeight: sHeight,
+				xMin: xMin,
+				yMin: yMin
 			}
+		}, () => {
+			this._renderCollage(layers);
 		});
+	}
 
+	_renderCollage(layers) {
 		const ctx = this.canvas.getContext('2d');
 			// clear the collage first before redrawing
 		ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-			// make ansync to get sure to have the updated layers..
-		setTimeout(() => {
-				// reverse the orders to draw the images from the first (lowest z index) to the last (highest z index)
-			this.props.layers.forEach(layer => {
-				const canvas = document.getElementById(this.props.layerIdPrefix + layer.id)
-				const layerRect = canvas.getBoundingClientRect();
-				ctx.drawImage(
-					canvas,
-					layerRect.left - xMin,
-					layerRect.top - yMin,
-					canvas.width,
-					canvas.height
-				);
-			});
-		}, 99);
+			// render all the layers together in one canvas
+		let visibleLayerCount = 0;
+		layers.forEach(layer => {
+			if (!layer.isVisible) return;
+			visibleLayerCount++;
+			ctx.drawImage(
+				document.getElementById(this.props.layerIdPrefix + layer.id),
+				layer.position.left - this.state.xMin,
+				layer.position.top - this.state.yMin,
+				layer.width,
+				layer.height
+			);
+		});
+
+			// hide canvas if there is no visible layer
+		if (!visibleLayerCount)
+			this.hideCanvas();
 	}
 
 		// open a new tab with the collage image
@@ -133,8 +159,7 @@ class LayerRenderer extends PureComponent {
 
 export default connect(
 	state => ({
-		state: state,	// just for the updating
-		layerIdPrefix: state.layers.idPrefix,				// the layer's id prefix
-		layers: state.layers.layers,		// the ordered layers array (ids only)
+		layerIdPrefix: state.layers.idPrefix,
+		layers: state.layers	// only state.layers.layers is needed but for the updates we take the root
 	})
 )(LayerRenderer);

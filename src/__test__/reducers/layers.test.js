@@ -1,9 +1,9 @@
 import layers, { layersInitialState } from '../../reducers/layers';
 import { INTERACTION_ENABLE_DRAWING, INTERACTION_ENABLE_MOVING, INTERACTION_DISABLE,
  ADD_LAYER, REMOVE_LAYER, SELECT_LAYER, TOGGLE_LAYER, SORT_LAYERS,
- LAYER_PUSH_HISTORY, LAYER_SET_TITLE, LAYER_OPERATION_FILL, LAYER_OPERATION_CLEAR,
- LAYER_OPERATION_MERGE, LAYER_OPERATION_COLORTOTRANSPARENT, LAYER_OPERATION_RESIZE,
- LAYER_OPERATION_CROP, LAYER_OPERATION_IMAGEDATA, LAYER_OPERATION_IMAGE,
+ LAYER_PUSH_HISTORY, LAYER_UPDATE_POSITION, LAYER_SET_TITLE, LAYER_OPERATION_FILL,
+ LAYER_OPERATION_CLEAR, LAYER_OPERATION_MERGE, LAYER_OPERATION_COLORTOTRANSPARENT,
+ LAYER_OPERATION_RESIZE, LAYER_OPERATION_CROP, LAYER_OPERATION_IMAGEDATA, LAYER_OPERATION_IMAGE,
  LAYER_OPERATION_CLONE, LAYER_OPERATION_UNDO, LAYER_OPERATION_DONE } from '../../actions/index';
 import layerIdHandler from '../../reducers/layers/layerIdHandler';
 import generateLayerStructure, { LAYER_ID_PREFIX } from '../../reducers/layers/generateLayerStructure';
@@ -233,6 +233,29 @@ describe('reducer: layers', () => {
         imageData: action.imageData,
         position: action.position
       }]);
+    });
+  });
+
+  describe('LAYER_UPDATE_POSITION', () => {
+    const state = {
+      layers: [{
+        id: 1,
+        position: null
+      }]
+    };
+    const action = {
+      type: LAYER_UPDATE_POSITION,
+      layerID: 1,
+      position: 'position'
+    };
+
+    it('must update the layer\s position', () => {
+  		expect(layers(state, action).layers[0].position).toBe('position');
+    });
+
+    it('must force layerID to type number', () => {
+      action.layerID = '1';
+      expect(layers(state, action).layers[0].position).toBe('position');
     });
   });
 

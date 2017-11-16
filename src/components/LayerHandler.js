@@ -9,28 +9,33 @@ import '../styles/LayerHandler.css';
 
 // read and load an image from file
 // callback with a loaded Image object
-function loadImageFromFile(file, callback) {
-	var fileReader = new FileReader();
-	fileReader.addEventListener('load', function onLoad() {
-		this.removeEventListener('load', onLoad, false);
+export const loadImageFromFile = (file, callback) => {
+	const fileReader = new FileReader();
+	fileReader.addEventListener('load', function onFileLoad() {
+    this.removeEventListener('load', onFileLoad, false);
 
-		const image = new Image();
-		image.addEventListener('load', function onLoad() {
-			this.removeEventListener('load', onLoad, false);
+    const image = new Image();
+    image.addEventListener('load', function onImageLoad() {
+      this.removeEventListener('load', onImageLoad, false);
 
-			callback(this);
-		}, false);
-		image.src = this.result;
-	}, false);
+      callback(this);
+    }, false);
+    image.src = this.result;
+  }, false);
 	fileReader.readAsDataURL(file);
 }
 
 /**
  * The layer handler block
  */
-class LayerHandler extends PureComponent {
+export class LayerHandler extends PureComponent {
 	constructor(props) {
 		super(props);
+
+    this.state = {
+      layerWidth: 600,
+      layerHeight: 400
+    };
 
 		this.addLayer = this.addLayer.bind(this);
 		this.fillLayer = this.fillLayer.bind(this);
@@ -41,44 +46,47 @@ class LayerHandler extends PureComponent {
 		this.addImageLayer = this.addImageLayer.bind(this);
 		this.insertImage = this.insertImage.bind(this);
 		this.colorToTransparent = this.colorToTransparent.bind(this);
+    this.onLayerWidthChange = this.onLayerWidthChange.bind(this);
+    this.onLayerHeightChange = this.onLayerHeightChange.bind(this);
+    this.addImageLayerCallback = this.addImageLayerCallback.bind(this);
+    this.insertImageCallback = this.insertImageCallback.bind(this);
 	}
 
 	// add a new layer
 	addLayer() {
 		this.props.dispatch(addLayer({
-			width: this.layerWidth.value,
-			height: this.layerHeight.value
+			width: this.state.layerWidth,
+			height: this.state.layerHeight
 		}));
 	}
 
 	// add a new layer with the given input image
 	addImageLayer(event) {
-		const self = this;
-		loadImageFromFile(event.target.files[0], image => {
-				// add a new layer with the given layer operatoin
-			self.props.dispatch(addLayer({
-				width: image.width,
-				height: image.height
-			}, {
-				type: LAYER_OPERATION_IMAGE,
-				image: image,
-				preventHistoryPush: true
-			}));
-		});
+		loadImageFromFile(event.target.files[0], this.addImageLayerCallback);
 	}
+
+  addImageLayerCallback(image) {
+    this.props.dispatch(addLayer({
+      width: image.width,
+      height: image.height
+    }, {
+      type: LAYER_OPERATION_IMAGE,
+      image: image,
+      preventHistoryPush: true
+    }));
+  }
 
 	// insert an image to the selected layer
 	insertImage(event) {
-			// do nothing if no layer is selected
-		if (!this.props.selectedLayerID) return;
-			// load & draw image on to the selected layer
-		loadImageFromFile(event.target.files[0], image => {
-			this.props.dispatch(drawLayerImage(
-				this.props.selectedLayerID,
-				image
-			));
-		});
+		loadImageFromFile(event.target.files[0], this.insertImageCallback);
 	}
+
+  insertImageCallback(image) {
+    this.props.dispatch(drawLayerImage(
+      this.props.selectedLayerID,
+      image
+    ));
+  }
 
 	// fill the selected layer with the currently selected color
 	fillLayer() {
@@ -102,19 +110,21 @@ class LayerHandler extends PureComponent {
 
 	// clone the selected layer
 	clone() {
-			// return is no layer is selected
-		if (!this.props.selectedLayerID) return;
-			// set the next layer content params
 		this.props.dispatch(cloneLayer(this.props.selectedLayerID));
 	}
 
 	// merge the selected layer with the next lower layer
 	merge() {
-			// return if no layer is selected
-		if (!this.props.selectedLayerID) return;
-			// merge this layer onto the next (sub) layer
 		this.props.dispatch(mergeLayers(this.props.selectedLayerID));
 	}
+
+  onLayerWidthChange(event) {
+    this.setState({layerWidth: event.target.value*1});
+  }
+
+  onLayerHeightChange(event) {
+    this.setState({layerHeight: event.target.value*1});
+  }
 
 	render() {
 		return (
@@ -136,11 +146,11 @@ class LayerHandler extends PureComponent {
 				</div>
 				<div className="LayerHandler-dimension">
 					<span>W</span>
-					<input className="LayerHandler-dimensionInput" ref={(input => this.layerWidth = input)} type="number" min="0" defaultValue="600" onChange={event => event.target.value *= 1} />
+					<input className="LayerHandler-dimensionInput" type="number" min="0" onChange={this.onLayerWidthChange} value={this.state.layerWidth} />
 				</div>
 				<div className="LayerHandler-dimension">
 					<span>H</span>
-					<input className="LayerHandler-dimensionInput" ref={(input => this.layerHeight = input)} type="number" min="0" defaultValue="400" onChange={event => event.target.value *= 1} />
+					<input className="LayerHandler-dimensionInput" type="number" min="0" onChange={this.onLayerHeightChange} value={this.state.layerHeight} />
 				</div>
 				<div className="LayerHandler-addlayer button" onClick={this.addLayer}>Add Layer</div>
 			</div>
@@ -152,6 +162,5 @@ export default connect(
 	state => ({
 		selectedColor: state.settings.strokeStyle,	// the selected color
 		selectedLayerID: state.layers.selectedID,	// the selected layer id
-		layers: state.layers.layers							// the layers array
 	})
 )(LayerHandler);

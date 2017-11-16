@@ -72,7 +72,7 @@ const LayerList = SortableContainer((props) => (
  * the list sorting represents the Z index of the layers
  * where the first layer in the list is the front layer
  */
-class LayerDisplay extends PureComponent {
+export class LayerDisplay extends PureComponent {
 	constructor(props) {
 		super(props);
 
@@ -138,6 +138,6 @@ class LayerDisplay extends PureComponent {
 export default connect(
 	state => ({
 		selectedLayerID: state.layers.selectedID,	// the currently selected layer id
-		layers: state.layers.layers							// the layers array
+		layers: state.layers.layers								// the layers array
 	})
 )(LayerDisplay);

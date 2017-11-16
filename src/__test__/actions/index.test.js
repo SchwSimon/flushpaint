@@ -316,6 +316,16 @@ describe('Layers', () => {
       });
     });
 
+    it('updatePosition', () => {
+      const layerID = 'layerID';
+      const position = 'position';
+      expect(actions.updatePosition(layerID, position)).toEqual({
+        type: actions.LAYER_UPDATE_POSITION,
+        layerID,
+        position
+      });
+    });
+
     it('undoHistory', () => {
       expect(actions.undoHistory()).toEqual({
         type: actions.LAYER_OPERATION_UNDO

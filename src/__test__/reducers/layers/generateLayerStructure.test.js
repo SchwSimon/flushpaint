@@ -12,7 +12,13 @@ describe('function generateLayerStructure()', () => {
     isVisible: true,
     width: 600,
     height: 400,
-    title: LAYER_ID_PREFIX + 1
+    title: LAYER_ID_PREFIX + 1,
+    position: {
+      left: 0,
+      right: 0,
+      top: 0,
+      bottom: 0
+    }
   };
 
 	it('must return a correct layer structure', () => {

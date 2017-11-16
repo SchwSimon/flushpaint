@@ -3,7 +3,7 @@ import { connect } from 'react-redux';
 import TextBox from '../components/Tool-TextBox';
 import Crop from '../components/Tool-Crop';
 import { enableDrawing, enableMoving, disableInteraction,
- pushHistory, resizeLayer, removeLayer,
+ pushHistory, updatePosition, resizeLayer, removeLayer,
  setStrokeStyle, selectLayer, layerOperationDone,
  LAYER_OPERATION_FILL, LAYER_OPERATION_CLEAR, LAYER_OPERATION_COLORTOTRANSPARENT,
  LAYER_OPERATION_IMAGEDATA, LAYER_OPERATION_IMAGE, LAYER_OPERATION_UNDO,
@@ -17,28 +17,74 @@ export class Layer extends Component {
 	constructor(props) {
 		super(props);
 
+    const drawboard = document.getElementById('Drawboard');
 		this.state = {
 			showTextbox: false,
-			top: 0,	// the layer's top position
-			left: 0	// the layer's left position
+			top: (drawboard.clientHeight/2) - (props.height/2),  // the layer's top position
+			left: (drawboard.clientWidth/2) - (props.width/2)    // the layer's left position
 		};
 
 		this.onMouseDown = this.onMouseDown.bind(this);
 		this.disableInteraction = this.disableInteraction.bind(this);
 		this.onMouseMove = this.onMouseMove.bind(this);
 		this.onTextPrint = this.onTextPrint.bind(this);
+    //this.onPositionUpdate = this.onPositionUpdate.bind(this);
 	}
 
 	componentDidMount() {
-		if (!this.props.layerOperation || this.props.layerOperation.id !== this.props.layerID) return;
-		this.doLayerOperation(this.props.layerOperation);
-			// center this layer
-    const drawboard = document.getElementById('Drawboard');
-		this.setState({
-			top: ((drawboard.clientHeight/2) - (this.layer.height/2)),
-			left: ((drawboard.clientWidth/2) - (this.layer.width/2))
-		});
+    this.onPositionUpdate();
+		if (this.props.layerOperation && this.props.layerOperation.id === this.props.layerID)
+		  this.doLayerOperation(this.props.layerOperation);
 	}
+
+  componentWillReceiveProps(nextProps) {
+    if (nextProps.layerOperation && nextProps.layerOperation.id === nextProps.layerID)
+			this.doLayerOperation(nextProps.layerOperation);
+  }
+
+  shouldComponentUpdate(nextProps, nextState) {
+		if (this.props.settings.tool !== nextProps.settings.tool
+			|| this.props.isSelected !== nextProps.isSelected
+				|| this.props.isVisible !== nextProps.isVisible
+					|| this.props.width !== nextProps.width
+						|| this.props.height !== nextProps.height
+							|| this.state.left !== nextState.left
+								|| this.state.top !== nextState.top
+									|| this.state.showTextbox !== nextState.showTextbox
+										|| this.state.toolClickX !== nextState.toolClickX
+											|| this.state.toolClickY !== nextState.toolClickY)
+			return true;
+		return false;
+	}
+
+  componentDidUpdate(prevProps, prevState) {
+    if (this.props.width !== prevProps.width
+        || this.props.height !== prevProps.height
+          || this.state.left !== prevState.left
+            || this.state.top !== prevState.top)
+      this.onPositionUpdate();
+  }
+
+  onPositionUpdate(update = false) {
+    if (!update || this.state.positionUpdateTimeout) {
+      clearTimeout(this.state.positionUpdateTimeout);
+      return this.setState({
+        positionUpdateTimeout: setTimeout(() => {
+          this.setState({positionUpdateTimeout: null}, () => {
+            this.onPositionUpdate(true);
+          });
+        }, 150)
+      });
+    }
+
+    const clientRect = this.layer.getBoundingClientRect();
+    this.props.dispatch(updatePosition(this.props.layerID, {
+      left: clientRect.left,
+      right: clientRect.right,
+      top: clientRect.top,
+      bottom: clientRect.bottom
+    }));
+  }
 
 		// layer's mouse down handler
 	onMouseDown(event) {
@@ -51,13 +97,12 @@ export class Layer extends Component {
 		const clientX = event.clientX;
 		const clientY = event.clientY;
 
-		const clientRect = this.layer.getBoundingClientRect();
 			// set the cursor's coordinates and the layer's offset position
 		this.setState({
 			clientX: clientX,
 			clientY: clientY,
-			offsetLeft: clientRect.left,
-			offsetTop: clientRect.top
+			offsetLeft: this.props.clientRect.left,
+			offsetTop: this.props.clientRect.top
 		}, () => {
 			switch(this.props.settings.tool) {
 				case ToolList.BRUSH:				// enable drawing
@@ -70,8 +115,8 @@ export class Layer extends Component {
 				case ToolList.TEXT:					// show text editor
 					return this.setState({
 						showTextbox: true,
-						toolClickX: clientX - clientRect.left,
-						toolClickY: clientY - clientRect.top
+						toolClickX: clientX - this.props.clientRect.left,
+						toolClickY: clientY - this.props.clientRect.top
 					});
 				default: return;
 			}
@@ -295,13 +340,12 @@ export class Layer extends Component {
       case LAYER_OPERATION_MERGE: {
         const targetLayer = document.getElementById(this.props.layerIdPrefix + operation.targetID);
         const targetLayerRect = targetLayer.getBoundingClientRect();
-  			const thisLayerRect = this.layer.getBoundingClientRect();
         this.doLayerOperation({
           type: LAYER_OPERATION_IMAGE,
           image: targetLayer,
           opts: [
-            -(thisLayerRect.x - targetLayerRect.x),
-            -(thisLayerRect.y - targetLayerRect.y)
+            -(this.props.clientRect.left - targetLayerRect.left),
+            -(this.props.clientRect.top - targetLayerRect.top)
           ]
         })
         return this.props.dispatch(removeLayer(operation.targetID));
@@ -325,27 +369,6 @@ export class Layer extends Component {
 
 			default: break;
 		}
-	}
-
-	shouldComponentUpdate(nextProps, nextState) {
-		if (this.props.settings.tool !== nextProps.settings.tool
-			|| this.props.isSelected !== nextProps.isSelected
-				|| this.props.isVisible !== nextProps.isVisible
-					|| this.props.width !== nextProps.width
-						|| this.props.height !== nextProps.height
-							|| this.state.left !== nextState.left
-								|| this.state.top !== nextState.top
-									|| this.state.showTextbox !== nextState.showTextbox
-										|| this.state.toolClickX !== nextState.toolClickX
-											|| this.state.toolClickY !== nextState.toolClickY
-												|| (nextProps.layerOperation && nextProps.layerOperation.id === nextProps.layerID))
-			return true;
-		return false;
-	}
-
-	componentWillUpdate(nextProps) {
-		if (nextProps.layerOperation && nextProps.layerOperation.id === nextProps.layerID)
-			this.doLayerOperation(nextProps.layerOperation);
 	}
 
 	render() {

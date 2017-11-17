@@ -44,20 +44,19 @@ const layers = (state = layersInitialState, action) => {
 		case ADD_LAYER: {
 			const layerID = layerIdHandler.next();
       const layerOperation = action.layerOperation || {
-        id: layerID,
         type: LAYER_OPERATION_FILL,
-        color: 'white',
-        preventHistoryPush: true
+        color: 'white'
       };
-      if (action.layerOperation)
-        layerOperation.id = layerID;
+      layerOperation.id = layerID;
+      layerOperation.preventHistoryPush = true;
 			return Object.assign({}, state, {
 				selectedID: layerID,
 				layers: state.layers.concat([
 					generateLayerStructure(
 						layerID,
-            action.dimensions.width,
-						action.dimensions.height
+            action.layerData.width,
+						action.layerData.height,
+            action.layerData.title
 					)
 				]),
         layerOperation: layerOperation
@@ -196,7 +195,8 @@ const layers = (state = layersInitialState, action) => {
           layerOperation: {
             id: action.layerID,
             type: LAYER_OPERATION_IMAGE,
-            image: action.image
+            image: action.image,
+            opts: action.opts
           }
   			});
       }
@@ -230,45 +230,39 @@ const layers = (state = layersInitialState, action) => {
       }
 			break;
 
-    case LAYER_OPERATION_MERGE: {
-      let layerIndex;
-      action.layerID = action.layerID*1;
-      state.layers.find((layer, index) => {
-        if (layer.id === action.layerID) {
-          layerIndex = index;
-          return true;
-        }
-        return false;
-      });
-      const targetLayer = state.layers[layerIndex-1];
-      if (targetLayer) {
-        return Object.assign({}, state, {
-          selectedID: targetLayer.id,
-          layerOperation: {
-            id: targetLayer.id,
-            type: LAYER_OPERATION_MERGE,
-            targetID: action.layerID
+    case LAYER_OPERATION_MERGE:
+      if (action.layerID) {
+        let layerIndex;
+        action.layerID = action.layerID*1;
+        state.layers.find((layer, index) => {
+          if (layer.id === action.layerID) {
+            layerIndex = index - 1;
+            return true;
           }
-  			});
+          return false;
+        });
+        if (state.layers[layerIndex])
+          return Object.assign({}, state, {
+            layerOperation: {
+              id: action.layerID,
+              type: LAYER_OPERATION_MERGE,
+              targetLayerID: state.layers[layerIndex].id,
+              position: state.layers[layerIndex].position
+            }
+          });
       }
       break;
-		}
 
-    case LAYER_OPERATION_CLONE: {
-      action.layerID = action.layerID*1;
-      const cloneLayer = Object.assign({}, state.layers.find(layer => layer.id === action.layerID));
-      cloneLayer.id = layerIdHandler.next();
-      cloneLayer.title = cloneLayer.title + ' (copy)';
-      return Object.assign({}, state, {
-        selectedID: cloneLayer.id,
-				layers: state.layers.concat([cloneLayer]),
-        layerOperation: {
-          id: cloneLayer.id,
-          type: LAYER_OPERATION_CLONE,
-          targetID: action.layerID
-        }
-			});
-    }
+    case LAYER_OPERATION_CLONE:
+      if (action.layerID) {
+        return Object.assign({}, state, {
+          layerOperation: {
+            id: action.layerID,
+            type: LAYER_OPERATION_CLONE
+          }
+        });
+      }
+      break;
 
     case LAYER_OPERATION_UNDO:
       if (!state.history.length) break;

@@ -1,5 +1,5 @@
 import React from 'react';
-import Enzyme, { shallow } from 'enzyme';
+import Enzyme, { mount } from 'enzyme';
 import sinon from 'sinon';
 import Adapter from 'enzyme-adapter-react-16';
 import { addLayer } from '../../actions/index';
@@ -10,13 +10,20 @@ import { Drawboard } from '../../containers/Drawboard';
 
 describe('<Drawboard />', () => {
 	const dispatch = sinon.spy();
-	const wrapper = shallow(<Drawboard dispatch={dispatch} />);
+	const wrapper = mount(<Drawboard dispatch={dispatch} />);
 
 	it('renders without crashing', () => {
 		expect(wrapper.length).toBe(1);
   });
 
 	describe('function componentDidMount()', () => {
+		it('must set state correct', () => {
+			expect(wrapper.state()).toEqual({
+				clientWidth: wrapper.instance().drawboard.clientWidth,
+				clientHeight: wrapper.instance().drawboard.clientHeight
+			});
+		});
+
 		it('must trigger dispatch with the given callback', () => {
 			const addLayerArgs = {
 				width: 600,

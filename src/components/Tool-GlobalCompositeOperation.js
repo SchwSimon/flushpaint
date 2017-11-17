@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
 import { setGlobalCompositeOperation } from '../actions/index';
 
@@ -33,7 +33,7 @@ export const GlobalCompositeOperations = {
 	LUMINOSITY: 'luminosity'
 };
 
-class GlobalCompositeOperation extends Component {
+export class GlobalCompositeOperation extends PureComponent {
 	constructor(props) {
 		super(props);
 
@@ -63,6 +63,6 @@ class GlobalCompositeOperation extends Component {
 
 export default connect(
 	state => ({
-		gcOperation: state.settings.globalCompositeOperation	// the selected global composite operation value
+		gcOperation: state.settings.globalCompositeOperation	// the selected global composite operation
 	})
 )(GlobalCompositeOperation);

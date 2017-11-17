@@ -177,11 +177,11 @@ describe('Layers', () => {
     });
 
     it('addLayer', () => {
-      const dimensions = 'dimensions';
+      const layerData = 'layerData';
       const layerOperation = 'layerOperation';
-      expect(actions.addLayer(dimensions, layerOperation)).toEqual({
+      expect(actions.addLayer(layerData, layerOperation)).toEqual({
         type: actions.ADD_LAYER,
-        dimensions,
+        layerData,
         layerOperation
       });
     });
@@ -297,10 +297,12 @@ describe('Layers', () => {
     it('drawLayerImage', () => {
       const layerID = 'layerID';
       const image = 'image';
-      expect(actions.drawLayerImage(layerID, image)).toEqual({
+      const opts = 'opts';
+      expect(actions.drawLayerImage(layerID, image, opts)).toEqual({
         type: actions.LAYER_OPERATION_IMAGE,
         layerID,
-        image
+        image,
+        opts
       });
     });
 

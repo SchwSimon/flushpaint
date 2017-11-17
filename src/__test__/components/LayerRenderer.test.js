@@ -126,6 +126,7 @@ describe('<LayerRenderer />', () => {
     });
 
 		describe('function _renderCollage()', () => {
+				////// MOUNT weg
 			const wrapper = mount(<LayerRenderer />);
 			const drawImageSpy = sinon.spy();
 			const hideCanvasSpy = sinon.spy(wrapper.instance(), 'hideCanvas');

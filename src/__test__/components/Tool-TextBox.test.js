@@ -6,7 +6,7 @@ import { TextBox } from '../../components/Tool-TextBox';
 
 Enzyme.configure({ adapter: new Adapter() });
 
-describe('<Tool />', () => {
+describe('<TextBox />', () => {
 	const wrapper = mount(<TextBox />);
 
 	it('renders without crashing', () => {

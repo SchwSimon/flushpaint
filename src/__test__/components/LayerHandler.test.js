@@ -11,7 +11,6 @@ Enzyme.configure({ adapter: new Adapter() });
 
 describe('function loadImageFromFile()', () => {
   const callbackSpy = sinon.spy();
-
   const readAsDataURLStub = sinon.stub(FileReader.prototype, 'readAsDataURL');
   sinon.stub(window, 'FileReader').returns({
     addEventListener: (a, onFileLoad, c) => {

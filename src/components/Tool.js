@@ -33,7 +33,6 @@ export class Tool extends PureComponent {
 	}
 
 	onClick() {
-		// select the tool
 		this.props.dispatch(setTool(this.props.tool));
 	}
 

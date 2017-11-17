@@ -36,4 +36,9 @@ describe('function generateLayerStructure()', () => {
   it('must force height to number', () => {
 		expect(generateLayerStructure(1, 600,'400')).toEqual(structure);
   });
+
+  it('must set the correct title', () => {
+    const title = 'set title.';
+		expect(generateLayerStructure(1, 600, 400, title).title).toBe(title);
+  });
 });

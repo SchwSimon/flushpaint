@@ -4,10 +4,7 @@ import { cropLayer } from '../actions/index';
 
 import '../styles/Tool-Crop.css';
 
-////////////////////////////////////////////////////////////////////////////////////
-////////////// wann gecropped ass top an left position checken firwa dei versaat gin...
-////////////////////////////////////////////////////////////////////////////////////
-class Crop extends PureComponent {
+export class Crop extends PureComponent {
 	constructor(props) {
 		super(props);
 
@@ -20,9 +17,7 @@ class Crop extends PureComponent {
 
 		this.enableMoving = this.enableMoving.bind(this);
 		this.enableResize = this.enableResize.bind(this);
-
 		this.disableInteraction = this.disableInteraction.bind(this);
-
 		this.onMouseMove = this.onMouseMove.bind(this);
 		this.onCrop = this.onCrop.bind(this);
 	}
@@ -54,19 +49,11 @@ class Crop extends PureComponent {
 
 	enableResize(event) {
 		event.stopPropagation();
-
 		this.setState({
 			isResizing: true,
 			isMoving: false,
 			clientX: event.clientX,
 			clientY: event.clientY
-		})
-	}
-
-	disableInteraction() {
-		this.setState({
-			isMoving: false,
-			isResizing: false
 		})
 	}
 
@@ -85,6 +72,17 @@ class Crop extends PureComponent {
 			width: this.state.width,
 			height: this.state.height,
 		}));
+		this.setState({
+			top: 0,
+			left: 0
+		});
+	}
+
+	disableInteraction() {
+		this.setState({
+			isMoving: false,
+			isResizing: false
+		})
 	}
 
 	render() {
@@ -105,19 +103,15 @@ class Crop extends PureComponent {
 					onMouseDown={this.enableMoving}
 				>
 					<div
-						ref={element => this.handler = element}
+						ref={handler => this.handler = handler}
 						className="Crop-resize"
 						onMouseDown={this.enableResize}
 					></div>
-					<div className="Crop-submit button" onClick={this.onCrop} >Crop!</div>
+					<div className="Crop-submit button" onClick={this.onCrop}>Crop!</div>
 				</div>
 			</div>
 		);
 	}
 }
 
-export default connect(
-	state => ({
-		layerIDPrefix: state.layers.idPrefix
-	})
-)(Crop);
+export default connect()(Crop);

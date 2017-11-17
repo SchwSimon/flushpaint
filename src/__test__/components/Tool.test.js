@@ -34,15 +34,14 @@ describe('ToolNames constant', () => {
 });
 
 describe('<Tool />', () => {
-	const wrapper = shallow(<Tool />);
+	const dispatchSpy = sinon.spy();
+	const wrapper = shallow(<Tool dispatch={dispatchSpy} tool={ToolList.TEXT} />);
 
 	it('renders without crashing', () => {
 		expect(wrapper.length).toBe(1);
   });
 
 	it('must trigger dispatch with setTool', () => {
-		const dispatchSpy = sinon.spy();
-		const wrapper = shallow(<Tool dispatch={dispatchSpy} tool={ToolList.TEXT} />);
 		wrapper.find('.Tool').simulate('click');
 		expect(dispatchSpy.calledWith(setTool(ToolList.TEXT))).toBeTruthy();
   });

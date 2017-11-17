@@ -3,8 +3,8 @@ import { connect } from 'react-redux';
 import TextBox from '../components/Tool-TextBox';
 import Crop from '../components/Tool-Crop';
 import { enableDrawing, enableMoving, disableInteraction,
- pushHistory, updatePosition, resizeLayer, removeLayer,
- setStrokeStyle, selectLayer, layerOperationDone,
+ addLayer, pushHistory, updatePosition, resizeLayer, removeLayer,
+ setStrokeStyle, selectLayer, drawLayerImage, layerOperationDone,
  LAYER_OPERATION_FILL, LAYER_OPERATION_CLEAR, LAYER_OPERATION_COLORTOTRANSPARENT,
  LAYER_OPERATION_IMAGEDATA, LAYER_OPERATION_IMAGE, LAYER_OPERATION_UNDO,
  LAYER_OPERATION_CROP, LAYER_OPERATION_CLONE, LAYER_OPERATION_MERGE } from '../actions/index';
@@ -17,18 +17,16 @@ export class Layer extends Component {
 	constructor(props) {
 		super(props);
 
-    const drawboard = document.getElementById('Drawboard');
 		this.state = {
 			showTextbox: false,
-			top: (drawboard.clientHeight/2) - (props.height/2),  // the layer's top position
-			left: (drawboard.clientWidth/2) - (props.width/2)    // the layer's left position
+			top: (props.drawboard.clientHeight/2) - (props.height/2),  // the layer's top position
+			left: (props.drawboard.clientWidth/2) - (props.width/2)    // the layer's left position
 		};
 
 		this.onMouseDown = this.onMouseDown.bind(this);
 		this.disableInteraction = this.disableInteraction.bind(this);
 		this.onMouseMove = this.onMouseMove.bind(this);
 		this.onTextPrint = this.onTextPrint.bind(this);
-    //this.onPositionUpdate = this.onPositionUpdate.bind(this);
 	}
 
 	componentDidMount() {
@@ -86,11 +84,9 @@ export class Layer extends Component {
     }));
   }
 
-		// layer's mouse down handler
 	onMouseDown(event) {
 		// prevent right click
 		if (event.button === 2) return;
-
 		event.preventDefault();
 		event.stopPropagation();
 
@@ -123,29 +119,23 @@ export class Layer extends Component {
 		});
 	}
 
-	// on mouse move on this layer
 	onMouseMove(event) {
 		event.preventDefault();
 		event.stopPropagation();
     if (this.props.interaction && this.props.interaction.layerID === this.props.layerID) {
-      if (this.props.interaction.draw)
+      if (this.props.interaction.draw) {
         this.draw(event.clientX, event.clientY);
-      else if (this.props.interaction.move)
+      } else if (this.props.interaction.move)
         this.move(event.clientX, event.clientY);
     }
 	}
 
-	// enable layer moving
 	enableMoving() {
-			// set this layer as selected layer
 		this.props.dispatch(selectLayer(this.props.layerID));
-			// enable moving
 		this.props.dispatch(enableMoving(this.props.layerID));
 	}
 
-	// enable drawing for this layer
 	enableDrawing() {
-			// push history
     this.pushHistory();
 			// set the layer's (canvas) context props
 		const ctx = this.layer.getContext('2d');
@@ -158,13 +148,12 @@ export class Layer extends Component {
 			ctx.strokeStyle = this.props.settings.strokeStyle;
 			ctx.globalCompositeOperation = this.props.settings.globalCompositeOperation;
 		}
-			// enable drawing for this layer
+
     this.props.dispatch(enableDrawing(this.props.layerID));
 			// trigger draw here to draw even if the user clicked only once without moving
 		this.draw();
 	}
 
-	// disable the live interaction (drawing/moving)
 	disableInteraction() {
     this.props.dispatch(disableInteraction());
 	}
@@ -330,33 +319,30 @@ export class Layer extends Component {
       }
 
       case LAYER_OPERATION_CLONE:
-        return this.doLayerOperation({
+        return this.props.dispatch(addLayer({
+          width: this.layer.width,
+          height: this.layer.height,
+          title: this.props.title + ' (copy)'
+        }, {
           type: LAYER_OPERATION_IMAGEDATA,
-          imageData: document.getElementById(this.props.layerIdPrefix + operation.targetID)
-            .getContext('2d').getImageData(0, 0, this.layer.width, this.layer.height),
-          preventHistoryPush: true
-        });
+          imageData: this.layer.getContext('2d').getImageData(0, 0, this.layer.width, this.layer.height)
+        }));
 
-      case LAYER_OPERATION_MERGE: {
-        const targetLayer = document.getElementById(this.props.layerIdPrefix + operation.targetID);
-        const targetLayerRect = targetLayer.getBoundingClientRect();
-        this.doLayerOperation({
-          type: LAYER_OPERATION_IMAGE,
-          image: targetLayer,
-          opts: [
-            -(this.props.clientRect.left - targetLayerRect.left),
-            -(this.props.clientRect.top - targetLayerRect.top)
-          ]
-        })
-        return this.props.dispatch(removeLayer(operation.targetID));
-      }
+      case LAYER_OPERATION_MERGE:
+        this.props.dispatch(drawLayerImage(
+          operation.targetLayerID,
+          this.layer,
+          [ -(operation.position.left - this.props.clientRect.left),
+            -(operation.position.top - this.props.clientRect.top) ]
+        ));
+        return this.props.dispatch(removeLayer(this.props.layerID));
 
       case LAYER_OPERATION_UNDO:
         if (operation.position)
-          this.setState(prevState => ({
+          this.setState({
             left: operation.position.left,
             top: operation.position.top
-          }));
+          });
         this.props.dispatch(resizeLayer(this.props.layerID, {
           width: operation.imageData.width,
           height: operation.imageData.height

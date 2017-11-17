@@ -68,9 +68,10 @@ describe('reducer: layers', () => {
     };
     const action = {
       type: ADD_LAYER,
-      dimensions: {
+      layerData: {
         width: 300,
-        height: 300
+        height: 300,
+        title: 'title'
       }
     };
 
@@ -82,24 +83,35 @@ describe('reducer: layers', () => {
     it('must push the new layer to the layers key', () => {
       const nextLayerId = layerIdHandler.current()+1;
   		expect(layers(state, action).layers).toEqual(
-        defaultState.layers.concat([generateLayerStructure(nextLayerId, 300, 300)])
+        defaultState.layers.concat([generateLayerStructure(nextLayerId, 300, 300, 'title')])
       );
     });
 
-    it('must set the default layerOperation', () => {
-  		expect(layers(state, action).layerOperation).toEqual({
-        id: layerIdHandler.current(),
-        type: LAYER_OPERATION_FILL,
-        color: 'white',
-        preventHistoryPush: true
+    describe('layerOperation', () => {
+      it('must set the default layerOperation', () => {
+    		expect(layers(state, action).layerOperation).toMatchObject({
+          type: LAYER_OPERATION_FILL,
+          color: 'white'
+        });
       });
-    });
 
-    it('must set the given layerOperation and add the current layer id to it', () => {
-      action.layerOperation = {someProp: 1};
-  		expect(layers(state, action).layerOperation).toEqual({
-        id: layerIdHandler.current(),
-        someProp: 1
+      it('must set the layer id as prop:id', () => {
+    		expect(layers(state, action).layerOperation).toMatchObject({
+          id: layerIdHandler.current()
+        });
+      });
+
+      it('must set true as prop:preventHistoryPush', () => {
+        expect(layers(state, action).layerOperation).toMatchObject({
+          preventHistoryPush: true
+        });
+      });
+
+      it('must set a custom layerOperation prop', () => {
+        action.layerOperation = {someProp: 33};
+    		expect(layers(state, action).layerOperation).toMatchObject({
+          someProp: 33
+        });
       });
     });
   });
@@ -424,71 +436,45 @@ describe('reducer: layers', () => {
     });
 
     describe('LAYER_OPERATION_MERGE', () => {
-      const targetID = 1;
+      const targetLayer = {
+        id: 1,
+        position: 'position'
+      };
       beforeEach(() => {
         action.type = LAYER_OPERATION_MERGE;
         action.layerID = 2;
         state.layers = [
-          {id: targetID},
-          {id:2}
+          {id: targetLayer.id, position: targetLayer.position},
+          {id: 2}
         ];
-        state.selectedID = 2;
       });
 
-      it('must set the selected id to the target layer\'s id', () => {
-        expect(layers(state, action).selectedID).toEqual(targetID);
+      it('must set right layer operation', () => {
+        expect(layers(state, action).layerOperation).toEqual({
+          id: action.layerID,
+          type: LAYER_OPERATION_MERGE,
+          targetLayerID: targetLayer.id,
+          position: targetLayer.position
+        });
       });
 
       it('must force layerID to type number', () => {
         action.layerID = '2';
-        expect(layers(state, action).selectedID).toEqual(targetID);
-      });
-
-      it('must set the right layer operation', () => {
         expect(layers(state, action).layerOperation).toEqual({
-          id: targetID,
+          id: action.layerID,
           type: LAYER_OPERATION_MERGE,
-          targetID: action.layerID
+          targetLayerID: targetLayer.id,
+          position: targetLayer.position
         });
       });
     });
 
     describe('LAYER_OPERATION_CLONE', () => {
-      const cloneTarget = {
-        id: 1,
-        title: 'title'
-      };
-      beforeEach(() => {
-        action.type = LAYER_OPERATION_CLONE;
-        state.layers = [cloneTarget];
-        state.selectedID = null;
-      });
-
-      it('must set the selected id to the clone\'s id', () => {
-        expect(layers(state, action).selectedID).toEqual(layerIdHandler.current());
-      });
-
-      it('must create a copy op the target layer except the id and title', () => {
-        expect(layers(state, action).layers).toEqual([cloneTarget, {
-          id: layerIdHandler.current(),
-          title: cloneTarget.title + ' (copy)'
-        }]);
-      });
-
-      it('must force layerID to type number', () => {
-        action.layerID = '1';
-        expect(layers(state, action).layers).toEqual([cloneTarget, {
-          id: layerIdHandler.current(),
-          title: cloneTarget.title + ' (copy)'
-        }]);
-      });
-
       it('must set the correct layerOperation', () => {
-        state.layerOperation = null;
+        action.type = LAYER_OPERATION_CLONE;
         expect(layers(state, action).layerOperation).toEqual({
-          id: layerIdHandler.current(),
-          type: LAYER_OPERATION_CLONE,
-          targetID: cloneTarget.id
+          id: 1,
+          type: LAYER_OPERATION_CLONE
         });
       });
     });

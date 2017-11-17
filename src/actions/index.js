@@ -66,9 +66,9 @@ export const enableMoving = (layerID) => ({
 export const disableInteraction = () => ({
 	type: INTERACTION_DISABLE
 });
-export const addLayer = (dimensions, layerOperation) => ({
+export const addLayer = (layerData, layerOperation) => ({
 	type: ADD_LAYER,
-	dimensions,
+	layerData,
 	layerOperation
 });
 export const cloneLayer = (layerID) => ({
@@ -130,10 +130,11 @@ export const putLayerImageData = (layerID, imageData) => ({
 	layerID,
 	imageData
 });
-export const drawLayerImage = (layerID, image) => ({
+export const drawLayerImage = (layerID, image, opts) => ({
 	type: LAYER_OPERATION_IMAGE,
 	layerID,
-	image
+	image,
+	opts
 });
 export const pushHistory = (layerID, imageData, position) => ({
 	type: LAYER_PUSH_HISTORY,

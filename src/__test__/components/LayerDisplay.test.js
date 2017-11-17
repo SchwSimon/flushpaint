@@ -7,8 +7,6 @@ import { LayerDisplay } from '../../components/LayerDisplay';
 
 Enzyme.configure({ adapter: new Adapter() });
 
-
-
 describe('<LayerDisplay />', () => {
   const layers = [1,2,3];
   const dispatchSpy = sinon.spy();

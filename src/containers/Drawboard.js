@@ -10,6 +10,11 @@ import '../styles/Drawboard.css';
  */
 export class Drawboard extends PureComponent {
 	componentDidMount() {
+		this.setState({
+			clientWidth: this.drawboard.clientWidth,
+			clientHeight: this.drawboard.clientHeight
+		});
+
 			// add one layer to start
 		this.props.dispatch(addLayer({
 			width: 600,
@@ -19,16 +24,25 @@ export class Drawboard extends PureComponent {
 
 	render() {
 		return (
-			<div id="Drawboard" onMouseUp={() => this.props.dispatch(disableInteraction())}>
+			<div
+				id="Drawboard"
+				ref={drawboard => this.drawboard = drawboard}
+				onMouseUp={() => this.props.dispatch(disableInteraction())}
+			>
 				{this.props.layers && this.props.layers.map(layer => (
 					<Layer
 						key={layer.id}
 						layerID={layer.id}
-						isVisible={layer.isVisible}
-						isSelected={layer.id === this.props.selectedLayerID}
+						title={layer.title}
 						width={layer.width}
 						height={layer.height}
+						drawboard={{
+							clientWidth: this.state.clientWidth,
+							clientHeight: this.state.clientHeight
+						}}
 						clientRect={layer.position}
+						isVisible={layer.isVisible}
+						isSelected={layer.id === this.props.selectedLayerID}
 					/>
 				))}
 			</div>

@@ -10,16 +10,14 @@ export const LineCaps = {
 	BUTT: 'butt'
 };
 
-class LineCap extends PureComponent {
+export class LineCap extends PureComponent {
 	constructor(props) {
 		super(props);
 
 		this.onClick = this.onClick.bind(this);
 	}
 
-	// on line cap click
 	onClick(event) {
-			// set the new stroke line cap
 		this.props.dispatch(setLineCap(event.target.dataset.cap));
 	}
 
@@ -31,9 +29,12 @@ class LineCap extends PureComponent {
 						className={'LineCap-button' + ((this.props.lineCap === LineCaps[key]) ? ' active' : '')}
 						key={index}
 					>
-						<div className={LineCaps[key]} style={{
-							backgroundColor: this.props.strokeStyle
-						}}></div>
+						<div
+							className={LineCaps[key]}
+							style={{
+								backgroundColor: this.props.strokeStyle
+							}}
+						></div>
 						<div className="centerer"></div>
 						<div className="LineCap-trigger" onClick={this.onClick} data-cap={LineCaps[key]}></div>
 					</div>

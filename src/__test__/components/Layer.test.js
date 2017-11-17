@@ -1,9 +1,9 @@
 import React from 'react';
 import sinon from 'sinon';
-import Enzyme, { shallow, mount } from 'enzyme';
+import Enzyme, { shallow } from 'enzyme';
 import Adapter from 'enzyme-adapter-react-16';
-import { setStrokeStyle, selectLayer, enableMoving, enableDrawing, disableInteraction,
- pushHistory, updatePosition, layerOperationDone, resizeLayer, removeLayer,
+import { setStrokeStyle, addLayer, selectLayer, enableMoving, enableDrawing, disableInteraction,
+ pushHistory, updatePosition, layerOperationDone, resizeLayer, removeLayer, drawLayerImage,
  LAYER_OPERATION_FILL, LAYER_OPERATION_CLEAR, LAYER_OPERATION_COLORTOTRANSPARENT,
  LAYER_OPERATION_IMAGEDATA, LAYER_OPERATION_IMAGE, LAYER_OPERATION_CROP,
  LAYER_OPERATION_CLONE, LAYER_OPERATION_MERGE, LAYER_OPERATION_UNDO } from '../../actions/index';
@@ -14,79 +14,135 @@ Enzyme.configure({ adapter: new Adapter() });
 import { Layer } from '../../components/Layer';
 
 describe('<Layer />', () => {
-  const props = (dispatch = () => {}) => ({
-    dispatch: dispatch,
+  const dispatchSpy = sinon.spy();
+  const props = {
+    dispatch: dispatchSpy,
+    title: 'title',
     width: 100,
     height: 100,
     settings: {
       tool: null
     },
     layerID: 1,
-    layerIdPrefix: 'layer-',
     clientRect: {
       left: 11,
       right: 22,
       top: 33,
       bottom: 44
+    },
+    drawboard: {
+      clientHeight: 200,
+      clientWidth: 400
+    },
+    layerOperation: {
+      id: 1
     }
-  });
-  const getBoundingClientRectReturn = {left: 3, top: 4};
-  const getElementByIdReturn = {
-    clientHeight: 50,
-    clientWidth: 50,
-    getContext: () => ({
-      getImageData: () => 'getImageData'
-    }),
-    getBoundingClientRect: () => getBoundingClientRectReturn
   };
-  const getElementByIdStub = sinon.stub(document, 'getElementById').returns(getElementByIdReturn);
-  let onPositionUpdateStub = sinon.stub(Layer.prototype, 'onPositionUpdate');
-	const wrapper = shallow(<Layer {...props()} />);
+  const getBoundingClientRectReturn = {
+    left: 1,
+    right: 2,
+    top: 3,
+    bottom: 4
+  };
+  const getContextReturn = {
+    getImageData: () => ({
+      data: [1,2,3,4]
+    }),
+    putImageData: () => {},
+    drawImage: () => {},
+    fillText: () => {},
+    rect: () => {},
+    fill: () => {},
+    lineCap: null,
+    lineWidth: null,
+    strokeStyle: null,
+    globalCompositeOperation: null
+  };
+  const onPositionUpdateStub = sinon.stub(Layer.prototype, 'onPositionUpdate');
+  const doLayerOperationStub = sinon.stub(Layer.prototype, 'doLayerOperation');
+	const wrapper = shallow(<Layer {...props} />);
+  const defaultState = Object.assign({}, wrapper.state());
+  wrapper.instance().layer = {
+    getBoundingClientRect: () => getBoundingClientRectReturn,
+    getContext: () => getContextReturn,
+    width: 1,
+    height: 2
+  };
+  onPositionUpdateStub.restore();
+  doLayerOperationStub.restore();
 
 	it('renders without crashing', () => {
 		expect(wrapper.length).toBe(1);
   });
 
   it('default state', () => {
-		expect(wrapper.state()).toEqual({
+		expect(defaultState).toEqual({
       showTextbox: false,
-      top: getElementByIdStub().clientHeight/2 - props().height/2,
-      left: getElementByIdStub().clientWidth/2 - props().width/2
+      top: (props.drawboard.clientHeight/2) - (props.height/2),
+      left: (props.drawboard.clientWidth/2) - (props.width/2)
     });
   });
 
-  it('must have called onPositionUpdate', () => {
-    expect(onPositionUpdateStub.called).toBeTruthy();
+  describe('Lifecycle', () => {
+    describe('componentDidMount', () => {
+      it('must have called onPositionUpdate', () => {
+        expect(onPositionUpdateStub.called).toBeTruthy();
+      });
+
+      it('must have called doLayerOperation with args', () => {
+        expect(doLayerOperationStub.calledWith(props.layerOperation)).toBeTruthy();
+      });
+    });
+
+    describe('componentWillReceiveProps', () => {
+      it('must trigger doLayerOperation with args', () => {
+        const nextProps = {
+          layerOperation: {
+            id: props.layerID,
+            test: 'componentWillReceiveProps'
+          },
+          layerID: props.layerID
+        };
+        const doLayerOperationStub = sinon.stub(wrapper.instance(), 'doLayerOperation');
+        wrapper.instance().componentWillReceiveProps(nextProps);
+        doLayerOperationStub.restore();
+        expect(doLayerOperationStub.calledWith(nextProps.layerOperation)).toBeTruthy();
+      });
+    });
+
+    describe('componentDidUpdate', () => {
+      it('must trigger onPositionUpdate', () => {
+        const prevProps = {
+          width: 1,
+          height: 2
+        };
+        const prevState = {
+          left: 3,
+          right: 4
+        };
+        const onPositionUpdateStub = sinon.stub(wrapper.instance(), 'onPositionUpdate');
+        wrapper.instance().componentDidUpdate(prevProps, prevState);
+        onPositionUpdateStub.restore();
+        expect(onPositionUpdateStub.called).toBeTruthy();
+      });
+    });
   });
 
   describe('functionality', () => {
     describe('function onPositionUpdate()', () => {
-      onPositionUpdateStub.restore();
-
       it('must set state:positionUpdateTimeout', () => {
-        const wrapper = shallow(<Layer {...props()}/>);
         wrapper.instance().onPositionUpdate(false);
         expect(wrapper.state().positionUpdateTimeout).toBeTruthy();
       });
 
       it('must trigger dispatch with updatePosition', () => {
-        const dispatchSpy = sinon.spy();
-        const wrapper = mount(<Layer {...props(dispatchSpy)}/>);
-        const getBoundingClientRectStub = sinon.stub(wrapper.instance().layer, 'getBoundingClientRect')
-          .returns({
-            left: 1,
-            right: 2,
-            top: 3,
-            bottom: 4
-          });
         wrapper.state().positionUpdateTimeout = null;
         wrapper.instance().onPositionUpdate(true);
-
-        expect(dispatchSpy.calledWith(updatePosition(props().layerID, {
-          left: 1,
-          right: 2,
-          top: 3,
-          bottom: 4
+        expect(dispatchSpy.calledWith(updatePosition(props.layerID, {
+          left: getBoundingClientRectReturn.left,
+          right: getBoundingClientRectReturn.right,
+          top: getBoundingClientRectReturn.top,
+          bottom: getBoundingClientRectReturn.bottom
         }))).toBeTruthy();
       });
     });
@@ -97,62 +153,59 @@ describe('<Layer />', () => {
         preventDefault: () => {},
         stopPropagation: () => {},
         clientX: 1,
-        clientY: 1
+        clientY: 2
       };
 
       it('must trigger function and set the correct state', () => {
-        const wrapper = mount(<Layer {...props()} />);
-        wrapper.find('canvas').simulate('mousedown', event);
+        wrapper.find('.canvas').simulate('mousedown', event);
         expect(wrapper.state()).toMatchObject({
           clientX: event.clientX,
     			clientY: event.clientY,
-    			offsetLeft: props().clientRect.left,
-    			offsetTop: props().clientRect.top
+    			offsetLeft: props.clientRect.left,
+    			offsetTop: props.clientRect.top
         });
       });
 
       describe('settings.tool switch', () => {
-        let spy;
-        afterEach(() =>{
-          spy.restore();
+        it('must trigger enableDrawing', () => {
+          const enableDrawingStub = sinon.stub(wrapper.instance(), 'enableDrawing');
+          wrapper.setProps({settings: {tool: ToolList.BRUSH}});
+          wrapper.instance().onMouseDown(event);
+          enableDrawingStub.restore();
+          expect(enableDrawingStub.called).toBeTruthy();
         });
 
         it('must trigger enableDrawing', () => {
-          spy = sinon.stub(Layer.prototype, 'enableDrawing');
-          const wrapper = mount(<Layer {...props()} settings={{tool: ToolList.BRUSH}}/>);
+          const enableDrawingStub = sinon.stub(wrapper.instance(), 'enableDrawing');
+          wrapper.setProps({settings: {tool: ToolList.ERASER}});
           wrapper.instance().onMouseDown(event);
-          expect(spy.called).toBeTruthy();
-        });
-
-        it('must trigger enableDrawing', () => {
-          spy = sinon.stub(Layer.prototype, 'enableDrawing');
-          const wrapper = mount(<Layer {...props()} settings={{tool: ToolList.ERASER}}/>);
-          wrapper.instance().onMouseDown(event);
-          expect(spy.called).toBeTruthy();
+          enableDrawingStub.restore();
+          expect(enableDrawingStub.called).toBeTruthy();
         });
 
         it('must trigger enableMoving', () => {
-          spy = sinon.stub(Layer.prototype, 'enableMoving');
-          const wrapper = mount(<Layer {...props()} settings={{tool: ToolList.MOVE}}/>);
+          const enableMovingStub = sinon.stub(wrapper.instance(), 'enableMoving');
+          wrapper.setProps({settings: {tool: ToolList.MOVE}});
           wrapper.instance().onMouseDown(event);
-          expect(spy.called).toBeTruthy();
+          enableMovingStub.restore();
+          expect(enableMovingStub.called).toBeTruthy();
         });
 
         it('must trigger absorbColor', () => {
-          spy = sinon.stub(Layer.prototype, 'absorbColor');
-          const wrapper = mount(<Layer {...props()} settings={{tool: ToolList.PIPETTE}}/>);
+          const absorbColorStub = sinon.stub(wrapper.instance(), 'absorbColor');
+          wrapper.setProps({settings: {tool: ToolList.PIPETTE}});
           wrapper.instance().onMouseDown(event);
-          expect(spy.called).toBeTruthy();
+          absorbColorStub.restore();
+          expect(absorbColorStub.called).toBeTruthy();
         });
 
         it('must set the state correctly', () => {
-          const wrapper = mount(<Layer {...props()} settings={{tool: ToolList.TEXT}}/>);
-          sinon.stub(wrapper.instance(), 'render').returns(null);
+          wrapper.setProps({settings: {tool: ToolList.TEXT}});
           wrapper.instance().onMouseDown(event);
           expect(wrapper.state()).toMatchObject({
             showTextbox: true,
-						toolClickX: event.clientX - props().clientRect.left,
-						toolClickY: event.clientY - props().clientRect.top
+						toolClickX: event.clientX - props.clientRect.left,
+						toolClickY: event.clientY - props.clientRect.top
           });
         });
       });
@@ -162,87 +215,56 @@ describe('<Layer />', () => {
       const event = {
         preventDefault: () => {},
         stopPropagation: () => {},
-        clientX: 10,
-        clientY: 10
+        clientX: 111,
+        clientY: 222
       };
 
-      it('must trigger draw with client coordinates', () => {
-        const wrapper = shallow(<Layer {...props()} interaction={{
-          layerID: 1,
-          draw: true
-        }}/>);
-        const draw = sinon.stub(wrapper.instance(), 'draw');
-        wrapper.find('canvas').simulate('mousemove', event);
-        expect(draw.calledWith(10, 10)).toBeTruthy();
+      it('must trigger draw with args', () => {
+        const drawStub = sinon.stub(wrapper.instance(), 'draw');
+        wrapper.setProps(Object.assign({}, props, {
+          interaction: {layerID: 1, draw: true}
+        }));
+        wrapper.find('.canvas').simulate('mousemove', event);
+        drawStub.restore();
+        expect(drawStub.calledWith(111, 222)).toBeTruthy();
       });
 
-      it('must trigger move with client coordinates', () => {
-        const wrapper = shallow(<Layer {...props()} interaction={{
-          layerID: 1,
-          move: true
-        }}/>);
-        const move = sinon.stub(wrapper.instance(), 'move');
-        wrapper.instance().onMouseMove(event);
-        expect(move.calledWith(10, 10)).toBeTruthy();
-      });
-
-      it('must not trigger move on interaction.id != layerID', () => {
-        const wrapper = shallow(<Layer {...props()} interaction={{
-          layerID: 2,
-          move: true
-        }}/>);
-        const move = sinon.stub(wrapper.instance(), 'move');
-        wrapper.instance().onMouseMove(event);
-        expect(move.called).toBeFalsy();
-      });
-
-      it('must not trigger move on interaction undefined', () => {
-        const wrapper = shallow(<Layer {...props()}/>);
-        const move = sinon.stub(wrapper.instance(), 'move');
-        wrapper.instance().onMouseMove(event);
-        expect(move.called).toBeFalsy();
+      it('must trigger move with args', () => {
+        const moveStub = sinon.stub(wrapper.instance(), 'move');
+        wrapper.setProps(Object.assign({}, props, {
+          interaction: {layerID: 1, move: true}
+        }));
+        wrapper.find('.canvas').simulate('mousemove', event);
+        moveStub.restore();
+        expect(moveStub.calledWith(111, 222)).toBeTruthy();
       });
     });
 
     describe('function enableMoving()', () => {
-      const dispatchSpy = sinon.spy();
-      const wrapper = shallow(<Layer {...props(dispatchSpy)}/>);
       wrapper.instance().enableMoving();
 
       it('must trigger dispatch with selectLayer', () => {
-        expect(dispatchSpy.calledWith(selectLayer(props().layerID))).toBeTruthy();
+        expect(dispatchSpy.calledWith(selectLayer(props.layerID))).toBeTruthy();
       });
 
       it('must trigger dispatch with enableMoving', () => {
-        expect(dispatchSpy.calledWith(enableMoving(props().layerID))).toBeTruthy();
+        expect(dispatchSpy.calledWith(enableMoving(props.layerID))).toBeTruthy();
       });
     });
 
     describe('function enableDrawing()', () => {
-      const settings = {
-        lineCap: 'line cap',
-        lineWidth: 'line width',
-        strokeStyle: 'stroke style',
-        globalCompositeOperation: 'gco'
-      };
-      const dispatchSpy = sinon.spy();
-      const wrapper = mount(<Layer {...props(dispatchSpy)} settings={settings}/>);
       const pushHistoryStub = sinon.stub(wrapper.instance(), 'pushHistory');
       const drawStub = sinon.stub(wrapper.instance(), 'draw');
-      sinon.stub(wrapper.instance().layer, 'getContext').returns({
-        lineCap: null,
-        lineWidth: null,
-        strokeStyle: null,
-        globalCompositeOperation: null
-      });
       wrapper.instance().enableDrawing();
+      pushHistoryStub.restore();
+      drawStub.restore();
 
       it('must trigger pushHistory', () => {
         expect(pushHistoryStub.called).toBeTruthy();
       });
 
       it('must trigger dispatch with enableDrawing', () => {
-        expect(dispatchSpy.calledWith(enableDrawing(props().layerID))).toBeTruthy();
+        expect(dispatchSpy.calledWith(enableDrawing(props.layerID))).toBeTruthy();
       });
 
       it('must trigger draw()', () => {
@@ -252,328 +274,248 @@ describe('<Layer />', () => {
 
     describe('function disableInteraction()', () => {
       it('must trigger dispatch with disableInteraction', () => {
-        const dispatchSpy = sinon.spy();
-        const wrapper = shallow(<Layer {...props(dispatchSpy)}/>);
-        wrapper.find('canvas').simulate('mouseup');
-        //wrapper.instance().disableInteraction();
+        wrapper.find('.canvas').simulate('mouseup');
         expect(dispatchSpy.calledWith(disableInteraction())).toBeTruthy();
       });
     });
 
     describe('function move()', () => {
       it('must set the correct state', () => {
-        const wrapper = shallow(<Layer {...props()}/>);
-        const prevState = wrapper.state();
-        wrapper.instance().move(6, 7);
+        wrapper.state().left = 1;
+        wrapper.state().top = 2;
+        wrapper.state().clientX = 3;
+        wrapper.state().clientY = 4;
+        wrapper.instance().move(5, 6);
         expect(wrapper.state()).toMatchObject({
-          left: prevState.left + (6 - prevState.clientX),
-          top: prevState.top + (7 - prevState.clientY),
-          clientX: 6,
-    			clientY: 7
+          left: 1 + (5 - 3),
+          top: 2 + (6 - 4),
+          clientX: 5,
+    			clientY: 6
         });
       });
     });
 
     describe('function absorbColor()', () => {
       it('must trigger dispatch with setStrokeStyle', () => {
-        const dispatchSpy = sinon.spy();
-        const wrapper = mount(<Layer {...props(dispatchSpy)}/>);
-        sinon.stub(wrapper.instance().layer, 'getContext').returns({
-          getImageData: () => ({
-            data: [1,2,3,4]
-          })
-        });
         wrapper.instance().absorbColor();
-        expect(dispatchSpy.calledWith(setStrokeStyle(Array.from([1,2,3,4])))).toBeTruthy();
+        expect(dispatchSpy.calledWith(setStrokeStyle(getContextReturn.getImageData().data))).toBeTruthy();
       });
     });
 
     describe('function onTextPrint()', () => {
-      const fillTextSpy = sinon.spy();
-      const wrapper = mount(<Layer {...props()}/>);
       const pushHistoryStub = sinon.stub(wrapper.instance(), 'pushHistory');
-      sinon.stub(wrapper.instance().layer, 'getContext').returns({
-        font: null,
-        fillStyle: null,
-        fillText: fillTextSpy
-      });
-      wrapper.instance().onTextPrint('text', {
-        size: 11, color: 'color',
-        x: 3, y: 4
-      });
+      wrapper.instance().onTextPrint('text', 'settings');
+      pushHistoryStub.restore();
 
       it('must trigger pushHistory', () => {
         expect(pushHistoryStub.called).toBeTruthy();
       });
-
-      it('must trigger fillText with args', () => {
-        expect(fillTextSpy.calledWith('text', 3, 4)).toBeTruthy();
-      });
     });
 
     describe('function pushHistory()', () => {
-      const dispatchSpy = sinon.spy();
-      const wrapper = mount(<Layer {...props(dispatchSpy)}/>);
-      sinon.stub(wrapper.instance().layer, 'getContext').returns({
-        getImageData: () => 'image data'
-      });
       wrapper.instance().pushHistory();
 
-      it('must trigger dispatch with pushHistory', () => {
+      it('must trigger dispatch with pushHistory (withPosition = false)', () => {
         expect(dispatchSpy.calledWith(pushHistory(
-          props().layerID,
-          'image data',
+          props.layerID,
+          getContextReturn.getImageData(),
           null
         ))).toBeTruthy();
       });
 
       it('must trigger dispatch with pushHistory (withPosition = true)', () => {
+        wrapper.state().left = 1;
+        wrapper.state().top = 2;
         wrapper.instance().pushHistory(true);
         expect(dispatchSpy.calledWith(pushHistory(
-          props().layerID,
-          'image data',
-          { left: wrapper.state().left,
-            top: wrapper.state().top  }
+          props.layerID,
+          getContextReturn.getImageData(),
+          {left: 1, top: 2}
         ))).toBeTruthy();
       });
     });
 
     describe('function doLayerOperation()', () => {
-      const dispatchSpy = sinon.spy();
-      const wrapper = mount(<Layer {...props(dispatchSpy)}/>);
-      const pushHistoryStub = sinon.stub(wrapper.instance(), 'pushHistory');
-      const fillSpy = sinon.spy();
-      const putImageDataSpy = sinon.spy();
-      const drawImageSpy = sinon.spy();
-      const doLayerOperationSpy = sinon.spy(wrapper.instance(), 'doLayerOperation');
-      sinon.stub(wrapper.instance().layer, 'getContext').returns({
-        rect: () => {},
-        fill: fillSpy,
-        getImageData: () => ({
-          data: [30,30,60,1]
-        }),
-        putImageData: putImageDataSpy,
-        drawImage: drawImageSpy
-      });
-      wrapper.instance().doLayerOperation({});
-
       it('must trigger dispatch with layerOperationDone', () => {
+        wrapper.instance().doLayerOperation({});
         expect(dispatchSpy.calledWith(layerOperationDone())).toBeTruthy();
       });
 
       describe('switch(operation.type)', () => {
-        let historyPushCallCount = 0;
-        let fillCallCount = 0;
-
         describe('LAYER_OPERATION_FILL', () => {
+          const pushHistoryStub = sinon.stub(wrapper.instance(), 'pushHistory');
           wrapper.instance().doLayerOperation({
             type: LAYER_OPERATION_FILL
           });
-          historyPushCallCount++;
-          fillCallCount++;
+          pushHistoryStub.restore();
 
           it('must trigger pushHistory', () => {
-            expect(pushHistoryStub.callCount).toBe(historyPushCallCount);
-          });
-
-          it('must trigger fill', () => {
-            expect(fillSpy.called).toBeTruthy();
+            expect(pushHistoryStub.called).toBeTruthy();
           });
         });
 
         describe('LAYER_OPERATION_CLEAR', () => {
+          const pushHistoryStub = sinon.stub(wrapper.instance(), 'pushHistory');
           wrapper.instance().doLayerOperation({
             type: LAYER_OPERATION_CLEAR
           });
-          historyPushCallCount++;
-          fillCallCount++;
+          pushHistoryStub.restore();
 
           it('must trigger pushHistory', () => {
-            expect(pushHistoryStub.callCount).toBe(historyPushCallCount);
-          });
-
-          it('must trigger fill', () => {
-            expect(fillSpy.callCount).toBe(fillCallCount);
+            expect(pushHistoryStub.called).toBeTruthy();
           });
         });
 
         describe('LAYER_OPERATION_COLORTOTRANSPARENT', () => {
+          const pushHistoryStub = sinon.stub(wrapper.instance(), 'pushHistory');
           wrapper.instance().doLayerOperation({
             type: LAYER_OPERATION_COLORTOTRANSPARENT,
             color: 'rgba(30,30,30,1)'
           });
-          historyPushCallCount++;
+          pushHistoryStub.restore();
 
           it('must trigger pushHistory', () => {
-            expect(pushHistoryStub.callCount).toBe(historyPushCallCount);
-          });
-
-          it('must trigger putImageData with args', () => {
-            expect(putImageDataSpy.calledWith({data: [30,30,60,0]}, 0, 0)).toBeTruthy();
+            expect(pushHistoryStub.called).toBeTruthy();
           });
         });
 
         describe('LAYER_OPERATION_IMAGEDATA', () => {
-          const imageData = {
-            width: wrapper.instance().layer.width,
-            height: wrapper.instance().layer.height,
-            test: LAYER_OPERATION_IMAGEDATA
-          };
+          const pushHistoryStub = sinon.stub(wrapper.instance(), 'pushHistory');
           wrapper.instance().doLayerOperation({
             type: LAYER_OPERATION_IMAGEDATA,
-            imageData: imageData
+            imageData: {
+              width: wrapper.instance().layer.width,
+              height: wrapper.instance().layer.height,
+            }
           });
-          historyPushCallCount++;
+          pushHistoryStub.restore();
 
           it('must trigger pushHistory', () => {
-            expect(pushHistoryStub.callCount).toBe(historyPushCallCount);
-          });
-
-          it('must trigger putImageData with args', () => {
-            expect(putImageDataSpy.calledWith(imageData, 0, 0)).toBeTruthy();
+            expect(pushHistoryStub.called).toBeTruthy();
           });
         });
 
         describe('LAYER_OPERATION_IMAGE', () => {
-          const operation = {
+          const pushHistoryStub = sinon.stub(wrapper.instance(), 'pushHistory');
+          wrapper.instance().doLayerOperation({
             type: LAYER_OPERATION_IMAGE,
-            image: {
-              width: 10,
-              height: 20,
-              test: LAYER_OPERATION_IMAGE
-            }
-          };
-          wrapper.instance().doLayerOperation(operation);
-          historyPushCallCount++;
+            image: 'image'
+          });
+          pushHistoryStub.restore();
 
           it('must trigger pushHistory', () => {
-            expect(pushHistoryStub.callCount).toBe(historyPushCallCount);
-          });
-
-          it('must trigger drawImage with args (opts undefined)', () => {
-            expect(drawImageSpy.calledWith(
-              operation.image,
-              (wrapper.instance().layer.width/2) - (operation.image.width/2),
-              (wrapper.instance().layer.height/2) - (operation.image.height/2),
-              operation.image.width,
-              operation.image.height
-            )).toBeTruthy();
-          });
-
-          it('must trigger drawImage with args (opts defined)', () => {
-            operation.opts = [1,2,3,4]
-            wrapper.instance().doLayerOperation(operation);
-            historyPushCallCount++;
-            expect(drawImageSpy.calledWith(operation.image, 1, 2, 3 ,4)).toBeTruthy();
+            expect(pushHistoryStub.called).toBeTruthy();
           });
         });
 
         describe('LAYER_OPERATION_CROP', () => {
-          const operation = {
+          const doLayerOperationSpy = sinon.spy(wrapper.instance(), 'doLayerOperation');
+          const pushHistoryStub = sinon.stub(wrapper.instance(), 'pushHistory');
+          wrapper.state().left = 1;
+          wrapper.state().top = 2;
+          wrapper.instance().doLayerOperation({
             type: LAYER_OPERATION_CROP,
-            cropData: {
-              left: 13,
-              top: 24,
-              width: 130,
-              height: 240
-            }
-          };
+            cropData: {left: 3, top: 4, width: 5, height: 6}
+          });
+          const state = wrapper.state();
+          doLayerOperationSpy.restore();
+          pushHistoryStub.restore();
 
           it('must trigger pushHistory (with arg: true)', () => {
-            wrapper.instance().doLayerOperation(operation);
-            historyPushCallCount++;
-            expect(pushHistoryStub.callCount).toBe(historyPushCallCount);
             expect(pushHistoryStub.calledWith(true)).toBeTruthy();
           });
 
           it('must set the state correctly', () => {
-            wrapper.state().left = 0;
-            wrapper.state().top = 0;
-            wrapper.instance().doLayerOperation(operation);
-            historyPushCallCount++;
-            expect(wrapper.state()).toMatchObject({
-              left: operation.cropData.left,
-              top: operation.cropData.top,
+            expect(state).toMatchObject({
+              left: 1 + 3,
+              top: 2 + 4
             });
           });
 
           it('must trigger dispatch with resizeLayer', () => {
-            expect(dispatchSpy.calledWith(resizeLayer(props().layerID, {
-              width: operation.cropData.width,
-              height: operation.cropData.height
+            expect(dispatchSpy.calledWith(resizeLayer(props.layerID, {
+              width: 5,
+              height: 6
             }))).toBeTruthy();
           });
-        });
-
-        describe('LAYER_OPERATION_CLONE', () => {
-          const operation = {
-            type: LAYER_OPERATION_CLONE,
-          };
-          wrapper.instance().doLayerOperation(operation);
 
           it('must trigger doLayerOperation with args', () => {
             expect(doLayerOperationSpy.calledWith({
               type: LAYER_OPERATION_IMAGEDATA,
-              imageData: 'getImageData',
+              imageData: getContextReturn.getImageData(),
               preventHistoryPush: true
             })).toBeTruthy();
           });
         });
 
-        describe('LAYER_OPERATION_MERGE', () => {
-          const operation = {
-            type: LAYER_OPERATION_MERGE,
-            targetID: 9
-          };
-          wrapper.instance().doLayerOperation(operation);
-          historyPushCallCount++;
+        describe('LAYER_OPERATION_CLONE', () => {
+          wrapper.instance().doLayerOperation({
+            type: LAYER_OPERATION_CLONE,
+          });
 
-          it('must trigger doLayerOperation with args', () => {
-            expect(doLayerOperationSpy.calledWith({
-              type: LAYER_OPERATION_IMAGE,
-              image: getElementByIdReturn,
-              opts: [
-                -(wrapper.props().clientRect.left - getBoundingClientRectReturn.left),
-                -(wrapper.props().clientRect.top - getBoundingClientRectReturn.top)
-              ]
-            })).toBeTruthy();
+          it('must trigger dispatch with addLayer', () => {
+            expect(dispatchSpy.calledWith(addLayer({
+              width: wrapper.instance().layer.width,
+              height: wrapper.instance().layer.height,
+              title: props.title + ' (copy)'
+            }, {
+              type: LAYER_OPERATION_IMAGEDATA,
+              imageData: getContextReturn.getImageData()
+            }))).toBeTruthy();
+          });
+        });
+
+        describe('LAYER_OPERATION_MERGE', () => {
+          wrapper.instance().doLayerOperation({
+            type: LAYER_OPERATION_MERGE,
+            targetLayerID: 9,
+            position: {
+              left: 1,
+              top: 2
+            }
+          });
+
+          it('must trigger dispatch with drawLayerImage', () => {
+            expect(dispatchSpy.calledWith(drawLayerImage(
+              9,
+              wrapper.instance().layer,
+              [ -(1 - props.clientRect.left),
+                -(2 - props.clientRect.top) ]
+            ))).toBeTruthy();
           });
 
           it('must trigger dispatch with removeLayer', () => {
-            expect(dispatchSpy.calledWith(removeLayer(operation.targetID))).toBeTruthy();
+            expect(dispatchSpy.calledWith(removeLayer(props.layerID))).toBeTruthy();
           });
         });
 
         describe('LAYER_OPERATION_UNDO', () => {
-          const operation = {
+          const doLayerOperationSpy = sinon.spy(wrapper.instance(), 'doLayerOperation');
+          wrapper.instance().doLayerOperation({
             type: LAYER_OPERATION_UNDO,
-            position: {
-              left: 8,
-              top: 9
-            },
-            imageData: {
-              width: 88,
-              height: 99
-            }
-          };
+            position: {left: 1, top: 2},
+            imageData: {width: 3, height: 4}
+          });
+          doLayerOperationSpy.restore();
 
           it('must set the state correctly', () => {
-            wrapper.instance().doLayerOperation(operation);
-            historyPushCallCount++;
-            expect(wrapper.state()).toMatchObject(operation.position);
+            expect(wrapper.state()).toMatchObject({
+              left: 1,
+              top: 2
+            });
           });
 
           it('must trigger dispatch with resizeLayer', () => {
-            expect(dispatchSpy.calledWith(resizeLayer(props().layerID, {
-              width: operation.imageData.width,
-              height: operation.imageData.height
+            expect(dispatchSpy.calledWith(resizeLayer(props.layerID, {
+              width: 3,
+              height: 4
             }))).toBeTruthy();
           });
 
           it('must trigger doLayerOperation with args', () => {
             expect(doLayerOperationSpy.calledWith({
               type: LAYER_OPERATION_IMAGEDATA,
-              imageData: operation.imageData,
+              imageData: {width: 3, height: 4},
               preventHistoryPush: true
             })).toBeTruthy();
           });

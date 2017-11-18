@@ -25,7 +25,7 @@ export class LayerRenderer extends PureComponent {
 
 	componentWillReceiveProps(nextProps) {
 			// hide the canvas if there are no layers
-		if (!nextProps.layers.layers || nextProps.layers.layers.length === 0)
+		if (!nextProps.layers.layers || !nextProps.layers.layers.length)
 			return this.hideCanvas();
 
 		this.updateThrottle(nextProps.layers.layers);
@@ -77,7 +77,7 @@ export class LayerRenderer extends PureComponent {
 		});
 
 			// set the new collage dimensions
-		this.setState((prevState) => {
+		this.setState(() => {
 			const cWidth = xMax - xMin;
 			const cHeight = yMax - yMin;
 
@@ -94,7 +94,7 @@ export class LayerRenderer extends PureComponent {
 				sHeight = 63;
 				sWidth = Math.round(63 / (cHeight / cWidth));
 			}
-
+			
 			return {
 				cWidth: cWidth,
 				cHeight: cHeight,

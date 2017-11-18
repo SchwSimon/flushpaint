@@ -1,3 +1,6 @@
+![Travis Build](https://travis-ci.org/SchwSimon/flushpaint.svg?branch=master)
+
+
 FlushPaint
 
 [Try it Live](https://flushmodules.com/flushpaint/index.html)

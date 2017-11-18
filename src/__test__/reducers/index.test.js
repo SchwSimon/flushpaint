@@ -1,7 +1,7 @@
 import { createStore } from 'redux';
 import AppStore from '../../reducers/index';
-import { settingsInitialState } from '../../reducers/Settings';
-import { layersInitialState } from '../../reducers/Layers';
+import { settingsInitialState } from '../../reducers/settings';
+import { layersInitialState } from '../../reducers/layers';
 
 describe('store', () => {
 	it('must create a correct store', () => {

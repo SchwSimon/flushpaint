@@ -2,6 +2,7 @@
   "name": "flushpaint",
   "version": "0.1.0",
   "private": true,
+  "homepage": "https://flushmodules.com/flushpaint/index.html",
   "dependencies": {
     "react": "^16.0.0",
     "react-color": "^2.13.8",

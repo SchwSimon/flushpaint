@@ -11,7 +11,7 @@ Enzyme.configure({ adapter: new Adapter() });
 
 describe('function loadImageFromFile()', () => {
   const callbackSpy = sinon.spy();
-  const readAsDataURLStub = sinon.stub(FileReader.prototype, 'readAsDataURL');
+  const readAsDataURLSpy = sinon.spy();
   sinon.stub(window, 'FileReader').returns({
     addEventListener: (a, onFileLoad, c) => {
       onFileLoad.call({
@@ -19,10 +19,8 @@ describe('function loadImageFromFile()', () => {
         result: 'result'
       });
     },
-    removeEventListener: () => {},
-    readAsDataURL: readAsDataURLStub
+    readAsDataURL: readAsDataURLSpy
   });
-
   const callbackArg = {
     removeEventListener: () => {},
     result: 'result'
@@ -30,15 +28,13 @@ describe('function loadImageFromFile()', () => {
   sinon.stub(window, 'Image').returns({
     addEventListener: (a, onImageLoad, c) => {
       onImageLoad.call(callbackArg);
-    },
-    removeEventListener: () => {},
-    readAsDataURL: readAsDataURLStub
+    }
   });
 
   loadImageFromFile('file', callbackSpy);
 
   it('must trigger readAsDataURL with arg', () => {
-    expect(readAsDataURLStub.calledWith('file')).toBeTruthy();
+    expect(readAsDataURLSpy.calledWith('file')).toBeTruthy();
   });
 
   it('must trigger the callback', () => {

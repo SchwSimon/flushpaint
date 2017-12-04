@@ -24,12 +24,6 @@ describe('<Layer />', () => {
       tool: null
     },
     layerID: 1,
-    clientRect: {
-      left: 11,
-      right: 22,
-      top: 33,
-      bottom: 44
-    },
     drawboard: {
       clientHeight: 200,
       clientWidth: 400
@@ -161,8 +155,8 @@ describe('<Layer />', () => {
         expect(wrapper.state()).toMatchObject({
           clientX: event.clientX,
     			clientY: event.clientY,
-    			offsetLeft: props.clientRect.left,
-    			offsetTop: props.clientRect.top
+    			offsetLeft: getBoundingClientRectReturn.left,
+    			offsetTop: getBoundingClientRectReturn.top
         });
       });
 
@@ -204,8 +198,8 @@ describe('<Layer />', () => {
           wrapper.instance().onMouseDown(event);
           expect(wrapper.state()).toMatchObject({
             showTextbox: true,
-						toolClickX: event.clientX - props.clientRect.left,
-						toolClickY: event.clientY - props.clientRect.top
+						toolClickX: event.clientX - getBoundingClientRectReturn.left,
+						toolClickY: event.clientY - getBoundingClientRectReturn.top
           });
         });
       });
@@ -466,6 +460,9 @@ describe('<Layer />', () => {
         });
 
         describe('LAYER_OPERATION_MERGE', () => {
+          const getElementByIdStub = sinon.stub(document, 'getElementById').returns({
+            getBoundingClientRect: () => getBoundingClientRectReturn
+          });
           wrapper.instance().doLayerOperation({
             type: LAYER_OPERATION_MERGE,
             targetLayerID: 9,
@@ -474,13 +471,14 @@ describe('<Layer />', () => {
               top: 2
             }
           });
+          getElementByIdStub.restore();
 
           it('must trigger dispatch with drawLayerImage', () => {
             expect(dispatchSpy.calledWith(drawLayerImage(
               9,
               wrapper.instance().layer,
-              [ -(1 - props.clientRect.left),
-                -(2 - props.clientRect.top) ]
+              [ -(getBoundingClientRectReturn.left - getBoundingClientRectReturn.left),
+                -(getBoundingClientRectReturn.top - getBoundingClientRectReturn.top) ]
             ))).toBeTruthy();
           });
 

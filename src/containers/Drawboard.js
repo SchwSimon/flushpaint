@@ -40,7 +40,6 @@ export class Drawboard extends PureComponent {
 							clientWidth: this.state.clientWidth,
 							clientHeight: this.state.clientHeight
 						}}
-						clientRect={layer.position}
 						isVisible={layer.isVisible}
 						isSelected={layer.id === this.props.selectedLayerID}
 					/>

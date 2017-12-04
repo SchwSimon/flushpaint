@@ -93,12 +93,13 @@ export class Layer extends Component {
 		const clientX = event.clientX;
 		const clientY = event.clientY;
 
+    const clientRect = this.layer.getBoundingClientRect();
 			// set the cursor's coordinates and the layer's offset position
 		this.setState({
 			clientX: clientX,
 			clientY: clientY,
-			offsetLeft: this.props.clientRect.left,
-			offsetTop: this.props.clientRect.top
+			offsetLeft: clientRect.left,
+			offsetTop: clientRect.top
 		}, () => {
 			switch(this.props.settings.tool) {
 				case ToolList.BRUSH:				// enable drawing
@@ -111,8 +112,8 @@ export class Layer extends Component {
 				case ToolList.TEXT:					// show text editor
 					return this.setState({
 						showTextbox: true,
-						toolClickX: clientX - this.props.clientRect.left,
-						toolClickY: clientY - this.props.clientRect.top
+						toolClickX: clientX - clientRect.left,
+						toolClickY: clientY - clientRect.top
 					});
 				default: return;
 			}
@@ -328,14 +329,17 @@ export class Layer extends Component {
           imageData: this.layer.getContext('2d').getImageData(0, 0, this.layer.width, this.layer.height)
         }));
 
-      case LAYER_OPERATION_MERGE:
+      case LAYER_OPERATION_MERGE: {
+        const clientRect = this.layer.getBoundingClientRect();
+        const operationClientRect = document.getElementById(this.props.layerIdPrefix + operation.targetLayerID).getBoundingClientRect();
         this.props.dispatch(drawLayerImage(
           operation.targetLayerID,
           this.layer,
-          [ -(operation.position.left - this.props.clientRect.left),
-            -(operation.position.top - this.props.clientRect.top) ]
+          [ -(operationClientRect.left - clientRect.left),
+            -(operationClientRect.top - clientRect.top) ]
         ));
         return this.props.dispatch(removeLayer(this.props.layerID));
+      }
 
       case LAYER_OPERATION_UNDO:
         if (operation.position)

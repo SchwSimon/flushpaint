@@ -232,15 +232,8 @@ const layers = (state = layersInitialState, action) => {
 
     case LAYER_OPERATION_MERGE:
       if (action.layerID) {
-        let layerIndex;
         action.layerID = action.layerID*1;
-        state.layers.find((layer, index) => {
-          if (layer.id === action.layerID) {
-            layerIndex = index - 1;
-            return true;
-          }
-          return false;
-        });
+        const layerIndex = state.layers.findIndex(layer => layer.id === action.layerID) - 1;
         if (state.layers[layerIndex])
           return Object.assign({}, state, {
             layerOperation: {
